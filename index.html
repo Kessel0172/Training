@@ -254,14 +254,17 @@ input,textarea,select,button{font-family:'Barlow',sans-serif}
 
     <!-- VOEDING -->
     <div class="page" id="page-voeding">
-      <div class="section-title" style="padding-bottom:2px">Voeding</div>
-      <!-- Periode navigator -->
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:0 10px 8px">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px 4px">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;letter-spacing:.5px">Voeding</div>
+        <button onclick="openVoedingDoelen()" style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:4px 10px;font-size:11px;color:var(--muted);cursor:pointer">⚙ Doelen</button>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:0 10px 6px">
         <button onclick="voedingPeriodPrev()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);width:30px;height:30px;border-radius:var(--radius-sm);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">&#8249;</button>
-        <div style="display:flex;gap:6px">
+        <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center">
           <button onclick="setVoedingPeriod('dag')" id="vpDag" class="vp-btn vp-active">Dag</button>
           <button onclick="setVoedingPeriod('week')" id="vpWeek" class="vp-btn">Week</button>
           <button onclick="setVoedingPeriod('maand')" id="vpMaand" class="vp-btn">Maand</button>
+          <button onclick="setVoedingPeriod('jaar')" id="vpJaar" class="vp-btn">Jaar</button>
         </div>
         <button onclick="voedingPeriodNext()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);width:30px;height:30px;border-radius:var(--radius-sm);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">&#8250;</button>
       </div>
@@ -353,19 +356,31 @@ input,textarea,select,button{font-family:'Barlow',sans-serif}
     <div class="sheet-title">Product toevoegen</div>
     <button class="scan-btn" onclick="startScan()">📷 Barcode scannen</button>
     <div id="scanResult" style="display:none;margin-bottom:8px;background:var(--green-dim);border:1px solid var(--green);border-radius:var(--radius-sm);padding:8px;font-size:12px;color:var(--green-text)"></div>
-    <div class="field-label">Datum</div><input class="field-input" type="date" id="vDatum">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div><div class="field-label">Datum</div><input class="field-input" type="date" id="vDatum"></div>
+      <div><div class="field-label">Maaltijd</div>
+        <select class="field-input" id="vMaaltijd">
+          <option value="ontbijt">🌅 Ontbijt</option>
+          <option value="lunch">☀️ Lunch</option>
+          <option value="avondeten" selected>🍽 Avondeten</option>
+          <option value="tussendoor">🍎 Tussendoortje</option>
+        </select>
+      </div>
+    </div>
     <div class="field-label">Productnaam</div>
     <div style="position:relative">
       <input class="field-input" id="vNaam" placeholder="bijv. banaan, kipfilet..." autocomplete="off" oninput="vdbSearch(this.value)">
       <div class="vdb-sugg" id="vdbSugg"></div>
     </div>
-    <div class="field-label">Portie / hoeveelheid (g)</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:start">
-      <div>
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:6px;align-items:start">
+      <div><div class="field-label">Portie (g/ml)</div>
         <input class="field-input" type="number" id="vHoeveelheid" placeholder="100" oninput="herbereken()">
         <div id="portieOpties" style="display:flex;gap:4px;flex-wrap:wrap;margin-top:5px"></div>
       </div>
-      <div><div class="field-label" style="margin-top:0">Kcal</div><input class="field-input" type="number" id="vKcal" placeholder="0"></div>
+      <div><div class="field-label">Aantal</div>
+        <input class="field-input" type="number" id="vAantal" placeholder="1" min="0.5" step="0.5" value="1" oninput="herbereken()">
+      </div>
+      <div><div class="field-label">Kcal</div><input class="field-input" type="number" id="vKcal" placeholder="0"></div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px">
       <div><div class="field-label">Eiwitten (g)</div><input class="field-input" type="number" step="0.1" id="vEiwit" placeholder="0"></div>
@@ -376,6 +391,25 @@ input,textarea,select,button{font-family:'Barlow',sans-serif}
     <div id="per100Ref" style="font-size:10px;color:var(--muted);margin-top:5px;display:none"></div>
     <button class="save-btn" onclick="saveVoeding()">Toevoegen</button>
     <button class="cancel-btn" onclick="closeVoeding()">Annuleren</button>
+  </div>
+</div>
+
+
+<!-- VOEDING DOELEN MODAL -->
+<div class="overlay" id="doelOverlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Dagelijkse doelen</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Stel je persoonlijke dagdoelen in. Week/maand/jaar worden automatisch berekend.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div><div class="field-label">Kcal / dag</div><input class="field-input" type="number" id="dKcal" placeholder="2500"></div>
+      <div><div class="field-label">Eiwitten (g)</div><input class="field-input" type="number" id="dEiwit" placeholder="160"></div>
+      <div><div class="field-label">Koolhydraten (g)</div><input class="field-input" type="number" id="dCarbs" placeholder="300"></div>
+      <div><div class="field-label">Vetten (g)</div><input class="field-input" type="number" id="dVet" placeholder="80"></div>
+      <div><div class="field-label">Zout (g)</div><input class="field-input" type="number" step="0.1" id="dZout" placeholder="6"></div>
+    </div>
+    <button class="save-btn" onclick="saveDoelen()">Opslaan</button>
+    <button class="cancel-btn" onclick="closeDoelen()">Annuleren</button>
   </div>
 </div>
 
@@ -1011,84 +1045,217 @@ function drawBarChartSlaap(canvas,labels,values){
   [0,Math.floor(labels.length/2),labels.length-1].forEach(i=>ctx.fillText(labels[i].slice(5),pd+i*(pw/labels.length)+(pw/labels.length)/2,H-1));
 }
 
-// VOEDINGSDATABASE (per 100g: {kcal, eiwit, carbs, vet, zout, porties:[{naam,g}]})
+// VOEDINGSDATABASE – uitgebreid (per 100g tenzij anders aangegeven)
+// {n, kcal, e:eiwit, c:carbs, v:vet, z:zout, p:[{n:portieName, g:gram, stuks?}]}
 const VDB=[
-  {n:'Banaan',kcal:89,e:1.1,c:23,v:0.3,z:0.0,p:[{n:'1 banaan (middel)',g:120},{n:'1 banaan (groot)',g:150},{n:'100g',g:100}]},
-  {n:'Appel',kcal:52,e:0.3,c:14,v:0.2,z:0.0,p:[{n:'1 appel',g:150},{n:'100g',g:100}]},
-  {n:'Sinaasappel',kcal:47,e:0.9,c:12,v:0.1,z:0.0,p:[{n:'1 sinaasappel',g:130},{n:'100g',g:100}]},
-  {n:'Aardbei',kcal:32,e:0.7,c:8,v:0.3,z:0.0,p:[{n:'Handje (10 stuks)',g:100},{n:'100g',g:100}]},
+  // FRUIT
+  {n:'Banaan',kcal:89,e:1.1,c:23,v:0.3,z:0.0,p:[{n:'1 banaan (S)',g:80,stuks:1},{n:'1 banaan (M)',g:120,stuks:1},{n:'1 banaan (L)',g:150,stuks:1},{n:'100g',g:100}]},
+  {n:'Appel',kcal:52,e:0.3,c:14,v:0.2,z:0.0,p:[{n:'1 kleine appel',g:120,stuks:1},{n:'1 grote appel',g:180,stuks:1},{n:'100g',g:100}]},
+  {n:'Sinaasappel',kcal:47,e:0.9,c:12,v:0.1,z:0.0,p:[{n:'1 sinaasappel',g:130,stuks:1},{n:'100g',g:100}]},
+  {n:'Aardbei',kcal:32,e:0.7,c:8,v:0.3,z:0.0,p:[{n:'1 aardbei',g:10,stuks:1},{n:'10 stuks',g:100},{n:'100g',g:100}]},
+  {n:'Blauwe bes',kcal:57,e:0.7,c:14,v:0.3,z:0.0,p:[{n:'Handje (80g)',g:80},{n:'100g',g:100}]},
   {n:'Druiven',kcal:69,e:0.6,c:18,v:0.2,z:0.0,p:[{n:'Handje',g:80},{n:'100g',g:100}]},
   {n:'Mango',kcal:60,e:0.8,c:15,v:0.4,z:0.0,p:[{n:'1/2 mango',g:150},{n:'100g',g:100}]},
-  {n:'Kipfilet',kcal:110,e:23,c:0,v:1.5,z:0.1,p:[{n:'1 kipfilet',g:150},{n:'100g',g:100}]},
-  {n:'Kippenborst gegrild',kcal:165,e:31,c:0,v:3.6,z:0.09,p:[{n:'1 filet',g:130},{n:'100g',g:100}]},
-  {n:'Rundergehakt (5% vet)',kcal:137,e:21,c:0,v:6,z:0.1,p:[{n:'Portie',g:150},{n:'100g',g:100}]},
-  {n:'Zalm',kcal:208,e:20,c:0,v:14,z:0.06,p:[{n:'1 filet',g:130},{n:'100g',g:100}]},
-  {n:'Tonijn (blik in water)',kcal:86,e:19,c:0,v:0.5,z:0.4,p:[{n:'1 blikje',g:130},{n:'100g',g:100}]},
-  {n:'Ei',kcal:143,e:13,c:0.7,v:10,z:0.4,p:[{n:'1 ei (M)',g:55},{n:'2 eieren',g:110},{n:'100g',g:100}]},
-  {n:'Griekse yoghurt 0%',kcal:57,e:10,c:4,v:0.4,z:0.07,p:[{n:'1 bakje (150g)',g:150},{n:'1 bakje (200g)',g:200},{n:'100g',g:100}]},
-  {n:'Kwark',kcal:72,e:12,c:4,v:0.3,z:0.08,p:[{n:'1 bakje (250g)',g:250},{n:'100g',g:100}]},
-  {n:'Cottage cheese',kcal:98,e:11,c:3,v:4,z:0.4,p:[{n:'Portie',g:100},{n:'250g bak',g:250}]},
-  {n:'Volle melk',kcal:61,e:3.2,c:4.8,v:3.3,z:0.1,p:[{n:'Glas (200ml)',g:200},{n:'100ml',g:100}]},
-  {n:'Halfvolle melk',kcal:46,e:3.3,c:4.8,v:1.5,z:0.1,p:[{n:'Glas (200ml)',g:200},{n:'100ml',g:100}]},
-  {n:'Havermout',kcal:368,e:13,c:58,v:7,z:0.01,p:[{n:'Portie droog (80g)',g:80},{n:'100g',g:100}]},
-  {n:'Brood volkoren',kcal:247,e:9,c:44,v:3,z:1.1,p:[{n:'1 snee',g:35},{n:'2 sneetjes',g:70},{n:'100g',g:100}]},
-  {n:'Brood wit',kcal:265,e:8,c:51,v:2.5,z:1.2,p:[{n:'1 snee',g:30},{n:'2 sneetjes',g:60},{n:'100g',g:100}]},
-  {n:'Rijst (gekookt)',kcal:130,e:2.7,c:28,v:0.3,z:0.0,p:[{n:'Portie',g:180},{n:'100g',g:100}]},
-  {n:'Pasta (gekookt)',kcal:131,e:5,c:25,v:1,z:0.0,p:[{n:'Portie',g:200},{n:'100g',g:100}]},
-  {n:'Zoete aardappel (gekookt)',kcal:86,e:1.6,c:20,v:0.1,z:0.05,p:[{n:'1 stuk',g:150},{n:'100g',g:100}]},
-  {n:'Aardappel (gekookt)',kcal:77,e:2,c:17,v:0.1,z:0.01,p:[{n:'1 aardappel',g:130},{n:'100g',g:100}]},
-  {n:'Broccoli',kcal:34,e:2.8,c:7,v:0.4,z:0.03,p:[{n:'Portie',g:200},{n:'100g',g:100}]},
-  {n:'Spinazie',kcal:23,e:2.9,c:3.6,v:0.4,z:0.08,p:[{n:'Portie',g:150},{n:'100g',g:100}]},
-  {n:'Sla / gemengde groenten',kcal:15,e:1.2,c:2.9,v:0.2,z:0.04,p:[{n:'Portie',g:100}]},
+  {n:'Perzik',kcal:39,e:0.9,c:10,v:0.3,z:0.0,p:[{n:'1 perzik',g:150,stuks:1},{n:'100g',g:100}]},
+  {n:'Peer',kcal:57,e:0.4,c:15,v:0.1,z:0.0,p:[{n:'1 peer',g:170,stuks:1},{n:'100g',g:100}]},
+  {n:'Kiwi',kcal:61,e:1.1,c:15,v:0.5,z:0.0,p:[{n:'1 kiwi',g:75,stuks:1},{n:'2 kiwis',g:150},{n:'100g',g:100}]},
+  {n:'Ananas',kcal:50,e:0.5,c:13,v:0.1,z:0.0,p:[{n:'Plak',g:80},{n:'100g',g:100}]},
+  {n:'Watermeloen',kcal:30,e:0.6,c:8,v:0.2,z:0.0,p:[{n:'Plak',g:300},{n:'100g',g:100}]},
+  {n:'Grapefruit',kcal:42,e:0.8,c:11,v:0.1,z:0.0,p:[{n:'1/2 grapefruit',g:120},{n:'100g',g:100}]},
+  {n:'Citroen',kcal:29,e:1.1,c:9,v:0.3,z:0.0,p:[{n:'1 citroen',g:80,stuks:1},{n:'100g',g:100}]},
+  {n:'Dadel',kcal:282,e:2.5,c:75,v:0.4,z:0.0,p:[{n:'1 dadel',g:8,stuks:1},{n:'3 dadels',g:24},{n:'100g',g:100}]},
+  {n:'Vijg (vers)',kcal:74,e:0.8,c:19,v:0.3,z:0.0,p:[{n:'1 vijg',g:50,stuks:1},{n:'100g',g:100}]},
+  {n:'Rozijnen',kcal:299,e:3.1,c:79,v:0.5,z:0.01,p:[{n:'Handje (40g)',g:40},{n:'100g',g:100}]},
+  {n:'Bosvruchten (mix)',kcal:50,e:1,c:12,v:0.5,z:0.0,p:[{n:'Portie (150g)',g:150},{n:'100g',g:100}]},
+  // GROENTEN
+  {n:'Broccoli',kcal:34,e:2.8,c:7,v:0.4,z:0.03,p:[{n:'Portie (200g)',g:200},{n:'100g',g:100}]},
+  {n:'Bloemkool',kcal:25,e:2,c:5,v:0.3,z:0.03,p:[{n:'Portie (200g)',g:200},{n:'100g',g:100}]},
+  {n:'Spinazie',kcal:23,e:2.9,c:3.6,v:0.4,z:0.08,p:[{n:'Portie (150g)',g:150},{n:'100g',g:100}]},
+  {n:'Sla (gemengd)',kcal:15,e:1.2,c:2.9,v:0.2,z:0.04,p:[{n:'Kom (100g)',g:100}]},
   {n:'Komkommer',kcal:15,e:0.7,c:3.6,v:0.1,z:0.0,p:[{n:'1/2 komkommer',g:200},{n:'100g',g:100}]},
-  {n:'Tomaat',kcal:18,e:0.9,c:3.9,v:0.2,z:0.01,p:[{n:'1 tomaat',g:120},{n:'100g',g:100}]},
-  {n:'Paprika',kcal:31,e:1,c:6,v:0.3,z:0.0,p:[{n:'1 paprika',g:150},{n:'100g',g:100}]},
-  {n:'Wortel',kcal:41,e:0.9,c:10,v:0.2,z:0.07,p:[{n:'1 wortel',g:100},{n:'100g',g:100}]},
-  {n:'Pindakaas',kcal:588,e:25,c:20,v:50,z:0.5,p:[{n:'1 eetlepel',g:15},{n:'2 eetlepels',g:30},{n:'100g',g:100}]},
-  {n:'Amandelen',kcal:579,e:21,c:22,v:50,z:0.01,p:[{n:'Handje (25g)',g:25},{n:'100g',g:100}]},
-  {n:'Walnoten',kcal:654,e:15,c:14,v:65,z:0.0,p:[{n:'Handje (25g)',g:25},{n:'100g',g:100}]},
-  {n:'Avocado',kcal:160,e:2,c:9,v:15,z:0.01,p:[{n:'1/2 avocado',g:70},{n:'1 avocado',g:140},{n:'100g',g:100}]},
-  {n:'Olijfolie',kcal:884,e:0,c:0,v:100,z:0.0,p:[{n:'1 eetlepel',g:13},{n:'100ml',g:100}]},
-  {n:'Whey protein (poeder)',kcal:400,e:80,c:8,v:5,z:0.3,p:[{n:'1 schep (30g)',g:30},{n:'100g',g:100}]},
-  {n:'Caseine proteïne',kcal:380,e:78,c:5,v:5,z:0.2,p:[{n:'1 schep (30g)',g:30},{n:'100g',g:100}]},
-  {n:'Maïs tortilla',kcal:218,e:6,c:46,v:3,z:0.8,p:[{n:'1 wrap',g:35},{n:'100g',g:100}]},
-  {n:'Zalmfilet (gerookt)',kcal:117,e:25,c:0,v:2,z:2.9,p:[{n:'1 portie',g:100}]},
-  {n:'Kabeljauw',kcal:82,e:18,c:0,v:0.7,z:0.1,p:[{n:'1 filet',g:120},{n:'100g',g:100}]},
-  {n:'Turkse yoghurt',kcal:100,e:6,c:5,v:6,z:0.1,p:[{n:'1 bakje (150g)',g:150},{n:'100g',g:100}]},
-  {n:'Cheddar',kcal:402,e:25,c:1.3,v:33,z:1.7,p:[{n:'1 plak',g:20},{n:'100g',g:100}]},
-  {n:'Mozzarella',kcal:280,e:18,c:3,v:22,z:0.4,p:[{n:'1 bol',g:125},{n:'100g',g:100}]},
-  {n:'Hüttenkäse',kcal:98,e:11,c:3,v:4,z:0.4,p:[{n:'Portie',g:100}]},
-  {n:'Skyr',kcal:63,e:11,c:4,v:0.2,z:0.06,p:[{n:'1 bakje (150g)',g:150},{n:'100g',g:100}]},
-  {n:'Rijstwafel',kcal:387,e:8,c:82,v:2,z:0.6,p:[{n:'1 wafel',g:9},{n:'3 wafels',g:27}]},
-  {n:'Cracker (volkoren)',kcal:412,e:10,c:70,v:8,z:1.4,p:[{n:'1 cracker',g:10},{n:'4 crackers',g:40}]},
+  {n:'Tomaat',kcal:18,e:0.9,c:3.9,v:0.2,z:0.01,p:[{n:'1 tomaat',g:120,stuks:1},{n:'100g',g:100}]},
+  {n:'Cherrytomaat',kcal:18,e:0.9,c:3.9,v:0.2,z:0.01,p:[{n:'1 stuks',g:10,stuks:1},{n:'10 stuks',g:100}]},
+  {n:'Paprika (rood)',kcal:31,e:1,c:6,v:0.3,z:0.0,p:[{n:'1 paprika',g:150,stuks:1},{n:'100g',g:100}]},
+  {n:'Paprika (geel)',kcal:27,e:1,c:6,v:0.2,z:0.0,p:[{n:'1 paprika',g:150,stuks:1},{n:'100g',g:100}]},
+  {n:'Wortel',kcal:41,e:0.9,c:10,v:0.2,z:0.07,p:[{n:'1 wortel',g:70,stuks:1},{n:'100g',g:100}]},
+  {n:'Ui',kcal:40,e:1.1,c:9,v:0.1,z:0.0,p:[{n:'1 ui',g:100,stuks:1},{n:'100g',g:100}]},
+  {n:'Knoflook',kcal:149,e:6.4,c:33,v:0.5,z:0.02,p:[{n:'1 teen',g:4,stuks:1},{n:'100g',g:100}]},
+  {n:'Champignon',kcal:22,e:3.1,c:3.3,v:0.3,z:0.01,p:[{n:'1 champignon',g:15,stuks:1},{n:'100g',g:100}]},
+  {n:'Courgette',kcal:17,e:1.2,c:3.1,v:0.3,z:0.0,p:[{n:'1 courgette',g:200,stuks:1},{n:'100g',g:100}]},
+  {n:'Aubergine',kcal:25,e:1,c:6,v:0.2,z:0.0,p:[{n:'1 aubergine',g:300,stuks:1},{n:'100g',g:100}]},
+  {n:'Asperge',kcal:20,e:2.2,c:3.9,v:0.1,z:0.0,p:[{n:'1 asperge',g:20,stuks:1},{n:'Portie',g:200}]},
+  {n:'Sperzieboon',kcal:31,e:1.8,c:7,v:0.2,z:0.0,p:[{n:'Portie (150g)',g:150},{n:'100g',g:100}]},
+  {n:'Maïs (blik)',kcal:86,e:3.3,c:19,v:1.2,z:0.4,p:[{n:'Portie (85g)',g:85},{n:'100g',g:100}]},
+  {n:'Avocado',kcal:160,e:2,c:9,v:15,z:0.01,p:[{n:'1/2 avocado',g:70},{n:'1 hele avocado',g:140},{n:'100g',g:100}]},
+  {n:'Zoete aardappel (gekookt)',kcal:86,e:1.6,c:20,v:0.1,z:0.05,p:[{n:'1 stuks (M)',g:150,stuks:1},{n:'100g',g:100}]},
+  {n:'Aardappel (gekookt)',kcal:77,e:2,c:17,v:0.1,z:0.01,p:[{n:'1 aardappel',g:130,stuks:1},{n:'100g',g:100}]},
+  {n:'Boerenkool',kcal:35,e:2.9,c:4.4,v:1.5,z:0.05,p:[{n:'Portie (150g)',g:150},{n:'100g',g:100}]},
+  {n:'Rode kool',kcal:31,e:1.4,c:7,v:0.2,z:0.02,p:[{n:'Portie (150g)',g:150},{n:'100g',g:100}]},
+  {n:'Witlof',kcal:17,e:1.1,c:3.8,v:0.2,z:0.0,p:[{n:'1 stronk',g:90,stuks:1},{n:'100g',g:100}]},
+  {n:'Prei',kcal:61,e:1.5,c:14,v:0.3,z:0.02,p:[{n:'1 prei',g:200,stuks:1},{n:'100g',g:100}]},
+  {n:'Selderij',kcal:16,e:0.7,c:3,v:0.2,z:0.1,p:[{n:'1 stengel',g:40,stuks:1},{n:'100g',g:100}]},
+  // VLEES & VIS
+  {n:'Kipfilet (ongekruid)',kcal:110,e:23,c:0,v:1.5,z:0.07,p:[{n:'1 filet (S)',g:100,stuks:1},{n:'1 filet (M)',g:150,stuks:1},{n:'1 filet (L)',g:200,stuks:1},{n:'100g',g:100}]},
+  {n:'Kipfilet (gegrild)',kcal:165,e:31,c:0,v:3.6,z:0.09,p:[{n:'1 filet',g:130,stuks:1},{n:'100g',g:100}]},
+  {n:'Kip dij (zonder vel)',kcal:177,e:18,c:0,v:12,z:0.1,p:[{n:'1 dij',g:130,stuks:1},{n:'100g',g:100}]},
+  {n:'Rundergehakt (mager)',kcal:137,e:21,c:0,v:6,z:0.1,p:[{n:'Portie (150g)',g:150},{n:'100g',g:100}]},
+  {n:'Biefstuk',kcal:172,e:26,c:0,v:7,z:0.06,p:[{n:'1 biefstuk',g:150,stuks:1},{n:'100g',g:100}]},
+  {n:'Varkenshaas',kcal:143,e:22,c:0,v:6,z:0.08,p:[{n:'Portie (150g)',g:150},{n:'100g',g:100}]},
+  {n:'Spek / bacon',kcal:458,e:37,c:0,v:35,z:2.1,p:[{n:'1 plak',g:15,stuks:1},{n:'3 plakken',g:45},{n:'100g',g:100}]},
+  {n:'Zalm (vers)',kcal:208,e:20,c:0,v:14,z:0.06,p:[{n:'1 filet',g:130,stuks:1},{n:'100g',g:100}]},
+  {n:'Zalm (gerookt)',kcal:117,e:25,c:0,v:2,z:2.9,p:[{n:'Portie (100g)',g:100},{n:'1 plak',g:25,stuks:1}]},
+  {n:'Tonijn (blik in water)',kcal:86,e:19,c:0,v:0.5,z:0.4,p:[{n:'1 blikje (130g)',g:130},{n:'100g',g:100}]},
+  {n:'Tonijn (blik in olie)',kcal:198,e:29,c:0,v:9,z:0.5,p:[{n:'1 blikje (130g)',g:130},{n:'100g',g:100}]},
+  {n:'Kabeljauw',kcal:82,e:18,c:0,v:0.7,z:0.1,p:[{n:'1 filet',g:150,stuks:1},{n:'100g',g:100}]},
+  {n:'Garnalen (gekookt)',kcal:99,e:21,c:0.9,v:1.1,z:1.2,p:[{n:'Portie (100g)',g:100}]},
+  {n:'Makreel',kcal:205,e:19,c:0,v:14,z:0.5,p:[{n:'1 filet',g:120,stuks:1},{n:'100g',g:100}]},
+  {n:'Sardines (blik)',kcal:208,e:24,c:0,v:12,z:0.7,p:[{n:'1 blikje (90g)',g:90},{n:'100g',g:100}]},
+  {n:'Tartaar',kcal:120,e:20,c:0,v:4,z:0.1,p:[{n:'1 bal',g:90,stuks:1},{n:'100g',g:100}]},
+  {n:'Kalkoenfilet',kcal:104,e:24,c:0,v:1,z:0.07,p:[{n:'1 filet',g:120,stuks:1},{n:'100g',g:100}]},
+  // EIEREN & ZUIVEL
+  {n:'Ei',kcal:143,e:13,c:0.7,v:10,z:0.4,p:[{n:'1 ei (S)',g:45,stuks:1},{n:'1 ei (M)',g:55,stuks:1},{n:'1 ei (L)',g:65,stuks:1},{n:'100g',g:100}]},
+  {n:'Eiwitten (rauw)',kcal:52,e:11,c:0.7,v:0.2,z:0.2,p:[{n:'1 eiwit',g:33,stuks:1},{n:'100g',g:100}]},
+  {n:'Griekse yoghurt (0%)',kcal:57,e:10,c:4,v:0.4,z:0.07,p:[{n:'1 bakje (150g)',g:150},{n:'1 bakje (200g)',g:200},{n:'100g',g:100}]},
+  {n:'Griekse yoghurt (vol)',kcal:115,e:9,c:4,v:7,z:0.06,p:[{n:'1 bakje (150g)',g:150},{n:'100g',g:100}]},
+  {n:'Kwark (mager)',kcal:72,e:12,c:4,v:0.3,z:0.08,p:[{n:'1 bakje (250g)',g:250},{n:'100g',g:100}]},
+  {n:'Skyr',kcal:63,e:11,c:4,v:0.2,z:0.06,p:[{n:'1 bakje (150g)',g:150},{n:'1 bakje (200g)',g:200},{n:'100g',g:100}]},
+  {n:'Cottage cheese',kcal:98,e:11,c:3,v:4,z:0.4,p:[{n:'Portie (100g)',g:100},{n:'Bakje (250g)',g:250}]},
+  {n:'Volle melk',kcal:61,e:3.2,c:4.8,v:3.3,z:0.1,p:[{n:'Glas (200ml)',g:200},{n:'Beker (250ml)',g:250},{n:'100ml',g:100}]},
+  {n:'Halfvolle melk',kcal:46,e:3.3,c:4.8,v:1.5,z:0.1,p:[{n:'Glas (200ml)',g:200},{n:'Beker (250ml)',g:250},{n:'100ml',g:100}]},
+  {n:'Magere melk',kcal:34,e:3.4,c:5,v:0.1,z:0.1,p:[{n:'Glas (200ml)',g:200},{n:'100ml',g:100}]},
+  {n:'Sojamelk (ongezoet)',kcal:33,e:3.3,c:1.7,v:1.8,z:0.04,p:[{n:'Glas (200ml)',g:200},{n:'100ml',g:100}]},
+  {n:'Amandelmelk (ongezoet)',kcal:15,e:0.6,c:0.6,v:1.2,z:0.07,p:[{n:'Glas (200ml)',g:200},{n:'100ml',g:100}]},
+  {n:'Cheddar',kcal:402,e:25,c:1.3,v:33,z:1.7,p:[{n:'1 plak (20g)',g:20,stuks:1},{n:'100g',g:100}]},
+  {n:'Mozzarella',kcal:280,e:18,c:3,v:22,z:0.4,p:[{n:'1 bol (125g)',g:125,stuks:1},{n:'100g',g:100}]},
+  {n:'Feta',kcal:264,e:14,c:4,v:21,z:1.9,p:[{n:'Blokje (30g)',g:30},{n:'100g',g:100}]},
+  {n:'Hüttenkäse / Cottage',kcal:98,e:11,c:3,v:4,z:0.4,p:[{n:'Portie (100g)',g:100}]},
+  {n:'Parmezaan (geraspt)',kcal:431,e:38,c:4,v:29,z:1.8,p:[{n:'1 eetlepel (10g)',g:10},{n:'100g',g:100}]},
+  {n:'Roomkaas (light)',kcal:140,e:5,c:4,v:12,z:0.5,p:[{n:'1 eetlepel (20g)',g:20},{n:'100g',g:100}]},
+  {n:'Boter',kcal:717,e:0.8,c:0.6,v:81,z:0.6,p:[{n:'1 klontje (7g)',g:7},{n:'1 eetlepel (15g)',g:15},{n:'100g',g:100}]},
+  {n:'Margarine (halvarine)',kcal:360,e:0.5,c:0.5,v:40,z:0.6,p:[{n:'1 klontje (7g)',g:7},{n:'100g',g:100}]},
+  // GRANEN & BROOD
+  {n:'Havermout (droog)',kcal:368,e:13,c:58,v:7,z:0.01,p:[{n:'Portie droog (60g)',g:60},{n:'Portie droog (80g)',g:80},{n:'100g',g:100}]},
+  {n:'Brood volkoren',kcal:247,e:9,c:44,v:3,z:1.1,p:[{n:'1 snee (dun)',g:25,stuks:1},{n:'1 snee (normaal)',g:35,stuks:1},{n:'100g',g:100}]},
+  {n:'Brood wit',kcal:265,e:8,c:51,v:2.5,z:1.2,p:[{n:'1 snee',g:30,stuks:1},{n:'100g',g:100}]},
+  {n:'Cracotte / knäckebröd',kcal:380,e:10,c:72,v:3,z:1.0,p:[{n:'1 cracker',g:8,stuks:1},{n:'3 crackers',g:24},{n:'100g',g:100}]},
+  {n:'Rijstwafel',kcal:387,e:8,c:82,v:2,z:0.6,p:[{n:'1 wafel',g:9,stuks:1},{n:'3 wafels',g:27},{n:'100g',g:100}]},
+  {n:'Tortilla (tarwe)',kcal:312,e:8,c:54,v:6,z:1.2,p:[{n:'1 wrap (groot)',g:70,stuks:1},{n:'1 wrap (klein)',g:40,stuks:1},{n:'100g',g:100}]},
+  {n:'Pitabrood',kcal:275,e:9,c:55,v:1.2,z:0.9,p:[{n:'1 pita',g:60,stuks:1},{n:'100g',g:100}]},
+  {n:'Bagel',kcal:270,e:10,c:52,v:2,z:0.8,p:[{n:'1 bagel',g:105,stuks:1},{n:'100g',g:100}]},
+  {n:'Rijst (basmati, gekookt)',kcal:130,e:2.7,c:28,v:0.3,z:0.0,p:[{n:'Portie (180g)',g:180},{n:'Portie (250g)',g:250},{n:'100g',g:100}]},
+  {n:'Rijst (zilvervlies, gekookt)',kcal:123,e:2.6,c:25,v:1,z:0.0,p:[{n:'Portie (180g)',g:180},{n:'100g',g:100}]},
+  {n:'Pasta (gekookt)',kcal:131,e:5,c:25,v:1,z:0.0,p:[{n:'Portie (200g)',g:200},{n:'Portie (250g)',g:250},{n:'100g',g:100}]},
+  {n:'Volkoren pasta (gekookt)',kcal:124,e:5.3,c:23,v:1.1,z:0.0,p:[{n:'Portie (200g)',g:200},{n:'100g',g:100}]},
+  {n:'Couscous (bereid)',kcal:112,e:4,c:23,v:0.6,z:0.01,p:[{n:'Portie (180g)',g:180},{n:'100g',g:100}]},
+  {n:'Quinoa (gekookt)',kcal:120,e:4.4,c:22,v:1.9,z:0.0,p:[{n:'Portie (185g)',g:185},{n:'100g',g:100}]},
+  {n:'Muesli',kcal:380,e:10,c:65,v:8,z:0.2,p:[{n:'Portie (60g)',g:60},{n:'Portie (80g)',g:80},{n:'100g',g:100}]},
+  {n:'Granola',kcal:471,e:9,c:64,v:20,z:0.2,p:[{n:'Portie (50g)',g:50},{n:'100g',g:100}]},
   {n:'Cornflakes',kcal:357,e:7,c:84,v:0.4,z:1.2,p:[{n:'Portie (40g)',g:40},{n:'100g',g:100}]},
-  {n:'Muesli',kcal:380,e:10,c:65,v:8,z:0.2,p:[{n:'Portie (60g)',g:60},{n:'100g',g:100}]},
-  {n:'Bonen (gekookt)',kcal:127,e:9,c:22,v:0.5,z:0.0,p:[{n:'Portie',g:150},{n:'100g',g:100}]},
-  {n:'Kikkererwten (gekookt)',kcal:164,e:9,c:27,v:2.6,z:0.04,p:[{n:'Portie',g:150},{n:'100g',g:100}]},
-  {n:'Linzen (gekookt)',kcal:116,e:9,c:20,v:0.4,z:0.0,p:[{n:'Portie',g:150},{n:'100g',g:100}]},
-  {n:'Edamame',kcal:122,e:11,c:9,v:5,z:0.01,p:[{n:'Portie',g:150},{n:'100g',g:100}]},
-  {n:'Tofu',kcal:76,e:8,c:2,v:4,z:0.01,p:[{n:'Portie',g:150},{n:'100g',g:100}]},
-  {n:'Kip dij (ongevel.)',kcal:177,e:18,c:0,v:12,z:0.1,p:[{n:'1 dij',g:130},{n:'100g',g:100}]},
-  {n:'Gehakt rund/vark.',kcal:250,e:17,c:0,v:21,z:0.2,p:[{n:'Portie',g:150},{n:'100g',g:100}]},
-  {n:'Spek / bacon',kcal:458,e:37,c:0,v:35,z:2.1,p:[{n:'1 plak',g:15},{n:'100g',g:100}]},
-  {n:'Protein bar',kcal:350,e:30,c:35,v:8,z:0.4,p:[{n:'1 reep',g:60},{n:'100g',g:100}]},
-  {n:'Creatine (poeder)',kcal:0,e:0,c:0,v:0,z:0.0,p:[{n:'1 schep (5g)',g:5}]},
-  {n:'Bananen smoothie',kcal:95,e:1.2,c:22,v:0.3,z:0.05,p:[{n:'Glas (300ml)',g:300},{n:'100ml',g:100}]},
-  {n:'Sinaasappelsap',kcal:45,e:0.7,c:10,v:0.2,z:0.01,p:[{n:'Glas (200ml)',g:200},{n:'100ml',g:100}]},
-  {n:'Cola (regular)',kcal:42,e:0,c:11,v:0,z:0.0,p:[{n:'Blikje (330ml)',g:330},{n:'100ml',g:100}]},
-  {n:'Bier (regular)',kcal:43,e:0.5,c:3.6,v:0,z:0.0,p:[{n:'Flesje (330ml)',g:330},{n:'Biertje (250ml)',g:250}]},
+  {n:'Croissant',kcal:406,e:8,c:46,v:21,z:0.9,p:[{n:'1 croissant',g:60,stuks:1},{n:'100g',g:100}]},
+  {n:'Pannenkoek',kcal:229,e:6,c:38,v:6,z:0.5,p:[{n:'1 pannenkoek',g:80,stuks:1},{n:'100g',g:100}]},
+  // PEULVRUCHTEN & NOTEN
+  {n:'Bonen (gekookt)',kcal:127,e:9,c:22,v:0.5,z:0.0,p:[{n:'Portie (150g)',g:150},{n:'100g',g:100}]},
+  {n:'Kikkererwten (gekookt)',kcal:164,e:9,c:27,v:2.6,z:0.04,p:[{n:'Portie (150g)',g:150},{n:'100g',g:100}]},
+  {n:'Linzen (gekookt)',kcal:116,e:9,c:20,v:0.4,z:0.0,p:[{n:'Portie (150g)',g:150},{n:'100g',g:100}]},
+  {n:'Edamame',kcal:122,e:11,c:9,v:5,z:0.01,p:[{n:'Portie (150g)',g:150},{n:'100g',g:100}]},
+  {n:'Pindakaas',kcal:588,e:25,c:20,v:50,z:0.5,p:[{n:'1 eetlepel (15g)',g:15},{n:'2 eetlepels (30g)',g:30},{n:'100g',g:100}]},
+  {n:'Amandelen',kcal:579,e:21,c:22,v:50,z:0.01,p:[{n:'Handje (25g)',g:25},{n:'50g',g:50},{n:'100g',g:100}]},
+  {n:'Walnoten',kcal:654,e:15,c:14,v:65,z:0.0,p:[{n:'Handje (25g)',g:25},{n:'100g',g:100}]},
+  {n:'Cashewnoten',kcal:553,e:18,c:33,v:44,z:0.01,p:[{n:'Handje (25g)',g:25},{n:'100g',g:100}]},
+  {n:'Pistaches',kcal:562,e:20,c:28,v:45,z:0.0,p:[{n:'Handje (28g)',g:28},{n:'100g',g:100}]},
+  {n:'Zonnebloempitten',kcal:584,e:21,c:20,v:51,z:0.01,p:[{n:'Eetlepel (10g)',g:10},{n:'100g',g:100}]},
+  {n:'Pompoenpitten',kcal:559,e:30,c:11,v:49,z:0.01,p:[{n:'Eetlepel (10g)',g:10},{n:'100g',g:100}]},
+  {n:'Chiazaad',kcal:486,e:17,c:42,v:31,z:0.02,p:[{n:'1 eetlepel (12g)',g:12},{n:'100g',g:100}]},
+  {n:'Lijnzaad',kcal:534,e:18,c:29,v:42,z:0.03,p:[{n:'1 eetlepel (10g)',g:10},{n:'100g',g:100}]},
+  {n:'Tofu',kcal:76,e:8,c:2,v:4,z:0.01,p:[{n:'Portie (150g)',g:150},{n:'100g',g:100}]},
+  {n:'Hummus',kcal:177,e:8,c:14,v:10,z:0.6,p:[{n:'2 eetlepels (50g)',g:50},{n:'100g',g:100}]},
+  // SAUZEN, OLIËN & SMAAKMAKERS
+  {n:'Olijfolie',kcal:884,e:0,c:0,v:100,z:0.0,p:[{n:'1 theelepel (5ml)',g:5},{n:'1 eetlepel (13ml)',g:13},{n:'100ml',g:100}]},
+  {n:'Zonnebloemolie',kcal:884,e:0,c:0,v:100,z:0.0,p:[{n:'1 eetlepel (13ml)',g:13},{n:'100ml',g:100}]},
+  {n:'Kokosvet',kcal:862,e:0,c:0,v:100,z:0.0,p:[{n:'1 eetlepel (13g)',g:13},{n:'100g',g:100}]},
+  {n:'Mayonaise',kcal:680,e:0.9,c:1.5,v:75,z:1.2,p:[{n:'1 eetlepel (15g)',g:15},{n:'100g',g:100}]},
+  {n:'Mayonaise (light)',kcal:335,e:0.8,c:8,v:33,z:1.1,p:[{n:'1 eetlepel (15g)',g:15},{n:'100g',g:100}]},
+  {n:'Ketchup',kcal:112,e:1.5,c:27,v:0.1,z:1.8,p:[{n:'1 eetlepel (17g)',g:17},{n:'100g',g:100}]},
+  {n:'Mosterd',kcal:66,e:3.7,c:8,v:3.3,z:2.2,p:[{n:'1 theelepel (5g)',g:5},{n:'100g',g:100}]},
+  {n:'Sojasaus',kcal:53,e:8,c:5,v:0.1,z:14,p:[{n:'1 eetlepel (15ml)',g:15},{n:'100ml',g:100}]},
+  {n:'Ketjap manis',kcal:240,e:5,c:55,v:0,z:3,p:[{n:'1 eetlepel (15ml)',g:15},{n:'100ml',g:100}]},
+  {n:'Sambal oelek',kcal:49,e:2.1,c:9,v:0.5,z:1.8,p:[{n:'1 theelepel (5g)',g:5},{n:'100g',g:100}]},
+  {n:'Honing',kcal:304,e:0.3,c:82,v:0,z:0.0,p:[{n:'1 theelepel (7g)',g:7},{n:'1 eetlepel (21g)',g:21},{n:'100g',g:100}]},
+  {n:'Jam (vruchtenjam)',kcal:250,e:0.5,c:65,v:0.1,z:0.03,p:[{n:'1 eetlepel (20g)',g:20},{n:'100g',g:100}]},
+  {n:'Hagelslag (melkchocolade)',kcal:481,e:5,c:72,v:18,z:0.2,p:[{n:'1 portie (13g)',g:13},{n:'100g',g:100}]},
+  {n:'Nutella / chocoladepasta',kcal:530,e:6,c:58,v:31,z:0.1,p:[{n:'1 eetlepel (15g)',g:15},{n:'2 eetlepels (30g)',g:30},{n:'100g',g:100}]},
+  // SPORT & SUPPLEMENTEN
+  {n:'Whey protein (poeder)',kcal:400,e:80,c:8,v:5,z:0.3,p:[{n:'1 schep (25g)',g:25},{n:'1 schep (30g)',g:30},{n:'100g',g:100}]},
+  {n:'Caseine proteïne',kcal:380,e:78,c:5,v:5,z:0.2,p:[{n:'1 schep (30g)',g:30},{n:'100g',g:100}]},
+  {n:'Plantaardige protein',kcal:390,e:75,c:9,v:6,z:0.3,p:[{n:'1 schep (30g)',g:30},{n:'100g',g:100}]},
+  {n:'Creatine (monohydraat)',kcal:0,e:0,c:0,v:0,z:0.0,p:[{n:'1 schep (5g)',g:5,stuks:1}]},
+  {n:'BCAA (poeder)',kcal:40,e:9,c:0,v:0,z:0.0,p:[{n:'1 schep (10g)',g:10}]},
+  {n:'Protein bar',kcal:350,e:30,c:35,v:8,z:0.4,p:[{n:'1 reep (60g)',g:60,stuks:1},{n:'100g',g:100}]},
+  {n:'Energy gel',kcal:100,e:0,c:25,v:0,z:0.1,p:[{n:'1 gel (40g)',g:40,stuks:1}]},
+  {n:'Isotone sportdrank',kcal:27,e:0,c:6.5,v:0,z:0.05,p:[{n:'Fles (500ml)',g:500},{n:'100ml',g:100}]},
+  // DRANKEN
+  {n:'Sinaasappelsap (vers)',kcal:45,e:0.7,c:10,v:0.2,z:0.01,p:[{n:'Glas (200ml)',g:200},{n:'100ml',g:100}]},
+  {n:'Appelsap',kcal:46,e:0.1,c:11,v:0.1,z:0.01,p:[{n:'Glas (200ml)',g:200},{n:'100ml',g:100}]},
+  {n:'Smoothie (banaan-melk)',kcal:80,e:3,c:16,v:0.8,z:0.07,p:[{n:'Glas (300ml)',g:300},{n:'100ml',g:100}]},
+  {n:'Cola (regular)',kcal:42,e:0,c:11,v:0,z:0.0,p:[{n:'Blikje (330ml)',g:330,stuks:1},{n:'Flesje (500ml)',g:500},{n:'100ml',g:100}]},
+  {n:'Cola (light / zero)',kcal:0,e:0,c:0,v:0,z:0.0,p:[{n:'Blikje (330ml)',g:330,stuks:1},{n:'100ml',g:100}]},
+  {n:'Bier (pils)',kcal:43,e:0.5,c:3.6,v:0,z:0.0,p:[{n:'Flesje (330ml)',g:330,stuks:1},{n:'Glas (250ml)',g:250}]},
+  {n:'Rode wijn',kcal:85,e:0.1,c:2.6,v:0,z:0.01,p:[{n:'Glas (150ml)',g:150},{n:'100ml',g:100}]},
+  {n:'Witte wijn',kcal:82,e:0.1,c:2.6,v:0,z:0.01,p:[{n:'Glas (150ml)',g:150},{n:'100ml',g:100}]},
   {n:'Koffie (zwart)',kcal:2,e:0.3,c:0,v:0,z:0.0,p:[{n:'Kopje (200ml)',g:200}]},
+  {n:'Koffie met volle melk',kcal:14,e:0.9,c:1.1,v:0.8,z:0.02,p:[{n:'Kopje met scheutje',g:230}]},
   {n:'Thee (zonder suiker)',kcal:1,e:0,c:0.2,v:0,z:0.0,p:[{n:'Kopje (200ml)',g:200}]},
-  {n:'Water',kcal:0,e:0,c:0,v:0,z:0.0,p:[{n:'Glas (250ml)',g:250},{n:'Fles (500ml)',g:500}]},
+  {n:'Water',kcal:0,e:0,c:0,v:0,z:0.0,p:[{n:'Glas (250ml)',g:250},{n:'Fles (500ml)',g:500},{n:'Fles (1L)',g:1000}]},
+  {n:'Proteineshake (bereid)',kcal:150,e:25,c:8,v:3,z:0.2,p:[{n:'1 shake (400ml)',g:400}]},
+  // SNACKS & ZOET
+  {n:'Chocolade (puur 70%)',kcal:598,e:8,c:46,v:43,z:0.01,p:[{n:'2 blokjes (20g)',g:20},{n:'100g',g:100}]},
+  {n:'Chocolade (melk)',kcal:535,e:8,c:60,v:30,z:0.1,p:[{n:'2 blokjes (20g)',g:20},{n:'100g',g:100}]},
+  {n:'Chips (naturel)',kcal:536,e:7,c:53,v:34,z:1.5,p:[{n:'Zakje (25g)',g:25},{n:'Zakje (200g)',g:200},{n:'100g',g:100}]},
+  {n:'Popcorn (gezouten)',kcal:387,e:11,c:78,v:4,z:1.1,p:[{n:'Portie (30g)',g:30},{n:'100g',g:100}]},
+  {n:'Stroopwafel',kcal:409,e:4,c:73,v:13,z:0.5,p:[{n:'1 stroopwafel',g:25,stuks:1},{n:'100g',g:100}]},
+  {n:'Koek (volkorenkoek)',kcal:400,e:7,c:69,v:11,z:0.4,p:[{n:'1 koek',g:20,stuks:1},{n:'100g',g:100}]},
+  {n:'Yoghurtdrank',kcal:68,e:3.2,c:12,v:0.5,z:0.07,p:[{n:'1 flesje (150ml)',g:150,stuks:1},{n:'100ml',g:100}]},
+  {n:'Mueslireep',kcal:380,e:6,c:66,v:10,z:0.2,p:[{n:'1 reep (35g)',g:35,stuks:1},{n:'100g',g:100}]},
+  // FASTFOOD & KANT-EN-KLAAR
+  {n:'Gekookt ei',kcal:155,e:13,c:1.1,v:11,z:0.4,p:[{n:'1 ei',g:50,stuks:1},{n:'2 eieren',g:100}]},
+  {n:'Omelet (2 eieren)',kcal:154,e:11,c:0.7,v:12,z:0.4,p:[{n:'1 omelet',g:110,stuks:1}]},
+  {n:'Soep (tomaten, blik)',kcal:35,e:1.2,c:6,v:0.8,z:0.7,p:[{n:'Kom (250ml)',g:250},{n:'100ml',g:100}]},
+  {n:'Soep (groenten, zelfgemaakt)',kcal:40,e:2,c:7,v:0.8,z:0.3,p:[{n:'Kom (300ml)',g:300},{n:'100ml',g:100}]},
+  {n:'Pizza (margherita)',kcal:250,e:11,c:33,v:8,z:0.7,p:[{n:'Puntje',g:100},{n:'Halve pizza',g:250}]},
+  {n:'Frikandel',kcal:244,e:14,c:6,v:19,z:0.9,p:[{n:'1 frikandel',g:75,stuks:1}]},
+  {n:'Kroket',kcal:243,e:8,c:22,v:14,z:0.9,p:[{n:'1 kroket',g:80,stuks:1}]},
 ];
 
 let voedingPeriod='dag';
 let voedingOffset=0;
 let activeScanPer100=null;
+let voedingDoelen=JSON.parse(localStorage.getItem('voedingDoelen')||'{"kcal":2500,"eiwit":160,"carbs":300,"vet":80,"zout":6}');
+
+function saveDoelen(){
+  voedingDoelen={
+    kcal:parseFloat(document.getElementById('dKcal').value)||2500,
+    eiwit:parseFloat(document.getElementById('dEiwit').value)||160,
+    carbs:parseFloat(document.getElementById('dCarbs').value)||300,
+    vet:parseFloat(document.getElementById('dVet').value)||80,
+    zout:parseFloat(document.getElementById('dZout').value)||6
+  };
+  localStorage.setItem('voedingDoelen',JSON.stringify(voedingDoelen));
+  closeDoelen();renderVoeding();
+}
+function openVoedingDoelen(){
+  document.getElementById('dKcal').value=voedingDoelen.kcal;
+  document.getElementById('dEiwit').value=voedingDoelen.eiwit;
+  document.getElementById('dCarbs').value=voedingDoelen.carbs;
+  document.getElementById('dVet').value=voedingDoelen.vet;
+  document.getElementById('dZout').value=voedingDoelen.zout;
+  document.getElementById('doelOverlay').classList.add('open');
+}
+function closeDoelen(){document.getElementById('doelOverlay').classList.remove('open');}
+document.getElementById('doelOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeDoelen();});
 
 function setVoedingPeriod(p){
   voedingPeriod=p;voedingOffset=0;
-  document.querySelectorAll('.vp-btn').forEach(b=>b.classList.remove('vp-active'));
+  ['Dag','Week','Maand','Jaar'].forEach(x=>document.getElementById('vp'+x).classList.remove('vp-active'));
   document.getElementById('vp'+p.charAt(0).toUpperCase()+p.slice(1)).classList.add('vp-active');
   renderVoeding();
 }
@@ -1100,31 +1267,39 @@ function getVoedingRange(){
   if(voedingPeriod==='dag'){
     const d=new Date(today);d.setDate(d.getDate()+voedingOffset);
     const ds=d.toISOString().slice(0,10);
-    return {start:ds,end:ds,label:voedingOffset===0?'Vandaag':ds};
+    const days=['Zo','Ma','Di','Wo','Do','Vr','Za'];
+    const months=['jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec'];
+    const label=voedingOffset===0?'Vandaag':voedingOffset===-1?'Gisteren':days[d.getDay()]+' '+d.getDate()+' '+months[d.getMonth()];
+    return {start:ds,end:ds,label};
   }
   if(voedingPeriod==='week'){
     const d=new Date(today);d.setDate(d.getDate()+voedingOffset*7);
     const day=d.getDay();const mon=new Date(d);mon.setDate(d.getDate()-(day===0?6:day-1));
     const sun=new Date(mon);sun.setDate(mon.getDate()+6);
     const fmt=x=>x.toISOString().slice(0,10);
-    const label=voedingOffset===0?'Deze week':fmt(mon)+' t/m '+fmt(sun).slice(5);
+    const label=voedingOffset===0?'Deze week':fmt(mon).slice(5)+' t/m '+fmt(sun).slice(5);
     return {start:fmt(mon),end:fmt(sun),label};
   }
   if(voedingPeriod==='maand'){
     const d=new Date(today.getFullYear(),today.getMonth()+voedingOffset,1);
-    const months=['januari','februari','maart','april','mei','juni','juli','augustus','september','oktober','november','december'];
+    const months=['Januari','Februari','Maart','April','Mei','Juni','Juli','Augustus','September','Oktober','November','December'];
     const start=d.toISOString().slice(0,10);
     const end=new Date(d.getFullYear(),d.getMonth()+1,0).toISOString().slice(0,10);
-    const label=(voedingOffset===0?'Deze maand — ':'')+months[d.getMonth()]+' '+d.getFullYear();
-    return {start,end,label};
+    return {start,end,label:months[d.getMonth()]+' '+d.getFullYear()};
+  }
+  if(voedingPeriod==='jaar'){
+    const yr=today.getFullYear()+voedingOffset;
+    return {start:yr+'-01-01',end:yr+'-12-31',label:'Jaar '+yr};
   }
 }
 
 // VOEDING
 document.getElementById('addVoedingBtn').onclick=()=>{
-  document.getElementById('vDatum').value=todayStr();
+  const range=getVoedingRange();
+  document.getElementById('vDatum').value=voedingPeriod==='dag'?range.start:todayStr();
   ['vNaam','vKcal','vEiwit','vCarbs','vVet','vZout'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('vHoeveelheid').value='100';
+  document.getElementById('vAantal').value='1';
   document.getElementById('scanResult').style.display='none';
   document.getElementById('per100Ref').style.display='none';
   document.getElementById('portieOpties').innerHTML='';
@@ -1139,12 +1314,12 @@ function vdbSearch(val){
   const sugg=document.getElementById('vdbSugg');
   if(val.length<1){sugg.style.display='none';return;}
   const q=val.toLowerCase();
-  const matches=VDB.filter(x=>x.n.toLowerCase().includes(q)).slice(0,8);
+  const matches=VDB.filter(x=>x.n.toLowerCase().includes(q)).slice(0,9);
   if(!matches.length){sugg.style.display='none';return;}
   sugg.style.display='block';
-  sugg.innerHTML=matches.map(x=>`<div class="vdb-item" onmousedown="pickVdb(event,'${x.n.replace(/'/g,"\'")}')">
-    <div><div class="vdb-name">${x.n}</div><div class="vdb-sub">${x.kcal} kcal/100g · ${x.e}g eiwit</div></div>
-    <div class="vdb-kcal">${x.p[0].n}</div>
+  sugg.innerHTML=matches.map(x=>`<div class="vdb-item" onmousedown="pickVdb(event,'${x.n.replace(/'/g,"\\'")}')">
+    <div><div class="vdb-name">${x.n}</div><div class="vdb-sub">${x.p[0].n} · ${x.kcal} kcal/100g</div></div>
+    <div class="vdb-kcal">${Math.round(x.kcal*x.p[0].g/100)} kcal</div>
   </div>`).join('');
 }
 
@@ -1155,30 +1330,28 @@ function pickVdb(e,naam){
   document.getElementById('vdbSugg').style.display='none';
   scanPer100={kcal:item.kcal,eiwit:item.e,carbs:item.c,vet:item.v,zout:item.z};
   activeScanPer100=scanPer100;
-  // Default portie
-  if(item.p&&item.p.length){
-    document.getElementById('vHoeveelheid').value=item.p[0].g;
-  } else {
-    document.getElementById('vHoeveelheid').value=100;
-  }
+  document.getElementById('vHoeveelheid').value=item.p[0].g;
+  document.getElementById('vAantal').value=1;
   herbereken();
-  // Toon portie knoppen
   const portieDiv=document.getElementById('portieOpties');
-  portieDiv.innerHTML=item.p.map(p=>`<button onmousedown="setPortion(event,${p.g})" style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:3px 7px;font-size:10px;color:var(--muted);cursor:pointer;white-space:nowrap">${p.n}</button>`).join('');
+  portieDiv.innerHTML=item.p.map(p=>`<button onmousedown="setPortion(event,${p.g},'${p.n.replace(/'/g,"\\'")}',${p.stuks?1:0})" style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:3px 7px;font-size:10px;color:var(--muted);cursor:pointer;white-space:nowrap">${p.n}</button>`).join('');
   const ref=document.getElementById('per100Ref');
   ref.style.display='block';
   ref.textContent=`Per 100g: ${item.kcal} kcal · ${item.e}g eiwit · ${item.c}g carbs · ${item.v}g vet`;
 }
 
-function setPortion(e,g){
+function setPortion(e,g,naam,hasStuks){
   e.preventDefault();
   document.getElementById('vHoeveelheid').value=g;
+  if(hasStuks) document.getElementById('vAantal').value=1;
   herbereken();
 }
 
 function herbereken(){
   const s=scanPer100||activeScanPer100;if(!s)return;
-  const gr=parseFloat(document.getElementById('vHoeveelheid').value)||100;const f=gr/100;
+  const gr=parseFloat(document.getElementById('vHoeveelheid').value)||100;
+  const aantal=parseFloat(document.getElementById('vAantal').value)||1;
+  const f=gr/100*aantal;
   document.getElementById('vKcal').value=Math.round(s.kcal*f);
   document.getElementById('vEiwit').value=(s.eiwit*f).toFixed(1);
   document.getElementById('vCarbs').value=(s.carbs*f).toFixed(1);
@@ -1187,29 +1360,95 @@ function herbereken(){
 }
 
 async function startScan(){
-  if(!('mediaDevices' in navigator)){alert('Camera niet beschikbaar. Voer productinfo handmatig in.');return;}
+  if(!('mediaDevices' in navigator)){
+    const code=prompt('Voer barcode handmatig in:');
+    if(code) await fetchBarcode(code.trim());
+    return;
+  }
   try{
-    const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
-    const video=document.createElement('video');video.srcObject=stream;video.setAttribute('playsinline','true');
+    const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{exact:'environment'}}}).catch(()=>
+      navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}})
+    );
+    const video=document.createElement('video');
+    video.srcObject=stream;video.setAttribute('playsinline','true');video.setAttribute('muted','true');
+    const canvas=document.createElement('canvas');
     const ov=document.createElement('div');
-    ov.style.cssText='position:fixed;inset:0;background:#000;z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px';
-    const p=document.createElement('p');p.style.cssText='color:#fff;font-size:13px';p.textContent='Houd barcode voor camera';
-    ov.appendChild(p);ov.appendChild(video);
-    const cb=document.createElement('button');cb.textContent='Annuleren';cb.style.cssText='padding:10px 24px;background:#3a0d0a;border:1px solid #f85149;border-radius:8px;color:#ff7b72;font-size:14px;cursor:pointer';
-    ov.appendChild(cb);document.body.appendChild(ov);video.play();
-    cb.onclick=()=>{stream.getTracks().forEach(t=>t.stop());ov.remove();};
+    ov.style.cssText='position:fixed;inset:0;background:#000;z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px';
+    const p=document.createElement('p');p.style.cssText='color:#fff;font-size:13px;text-align:center;padding:0 20px';
+    p.textContent='Houd barcode voor camera';
+    const frame=document.createElement('div');
+    frame.style.cssText='position:relative;width:280px;height:200px;border:2px solid #3fb950;border-radius:8px;overflow:hidden';
+    video.style.cssText='width:100%;height:100%;object-fit:cover';
+    frame.appendChild(video);
+    const line=document.createElement('div');
+    line.style.cssText='position:absolute;left:0;right:0;top:50%;height:2px;background:rgba(63,185,80,0.7);animation:scan-line 2s linear infinite';
+    const style=document.createElement('style');
+    style.textContent='@keyframes scan-line{0%{top:10%}100%{top:90%}}';
+    document.head.appendChild(style);
+    frame.appendChild(line);
+    ov.appendChild(p);ov.appendChild(frame);
+    const manualBtn=document.createElement('button');
+    manualBtn.textContent='Barcode handmatig invoeren';
+    manualBtn.style.cssText='padding:8px 18px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:13px;cursor:pointer';
+    const cancelBtn=document.createElement('button');
+    cancelBtn.textContent='Annuleren';
+    cancelBtn.style.cssText='padding:8px 18px;background:#3a0d0a;border:1px solid #f85149;border-radius:8px;color:#ff7b72;font-size:14px;cursor:pointer';
+    ov.appendChild(manualBtn);ov.appendChild(cancelBtn);
+    document.body.appendChild(ov);
+    await video.play();
+
+    const stop=()=>{try{stream.getTracks().forEach(t=>t.stop());}catch{}ov.remove();};
+    cancelBtn.onclick=stop;
+    manualBtn.onclick=async()=>{stop();const code=prompt('Voer barcode in:');if(code)await fetchBarcode(code.trim());};
+
+    // Try BarcodeDetector first (Chrome/Android)
     if('BarcodeDetector' in window){
-      const detector=new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e']});
-      const scan=setInterval(async()=>{
-        try{const bc=await detector.detect(video);if(bc.length){clearInterval(scan);stream.getTracks().forEach(t=>t.stop());ov.remove();await fetchBarcode(bc[0].rawValue);}}catch{}
-      },300);
-    } else {stream.getTracks().forEach(t=>t.stop());ov.remove();const code=prompt('Barcode scanner niet beschikbaar.\nVoer barcode handmatig in:');if(code)await fetchBarcode(code.trim());}
-  }catch{alert('Camera toegang geweigerd. Voer productinfo handmatig in.');}
+      const detector=new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e','code_128','code_39']});
+      const interval=setInterval(async()=>{
+        if(!document.body.contains(ov)){clearInterval(interval);return;}
+        try{
+          canvas.width=video.videoWidth;canvas.height=video.videoHeight;
+          canvas.getContext('2d').drawImage(video,0,0);
+          const codes=await detector.detect(canvas);
+          if(codes.length){clearInterval(interval);stop();await fetchBarcode(codes[0].rawValue);}
+        }catch{}
+      },400);
+    } else {
+      // Fallback: use ZXing via CDN for iOS Safari
+      p.textContent='Scanner laden...';
+      const script=document.createElement('script');
+      script.src='https://unpkg.com/@zxing/library@0.19.1/umd/index.min.js';
+      script.onload=()=>{
+        p.textContent='Houd barcode voor camera';
+        try{
+          const hints=new Map();
+          const formats=[window.ZXing.BarcodeFormat.EAN_13,window.ZXing.BarcodeFormat.EAN_8,window.ZXing.BarcodeFormat.UPC_A,window.ZXing.BarcodeFormat.CODE_128];
+          hints.set(window.ZXing.DecodeHintType.POSSIBLE_FORMATS,formats);
+          const reader=new window.ZXing.BrowserMultiFormatReader(hints);
+          reader.decodeFromStream(stream,video,(result,err)=>{
+            if(result){
+              reader.reset();stop();
+              fetchBarcode(result.getText()).catch(()=>{});
+            }
+          });
+          cancelBtn.onclick=()=>{try{reader.reset();}catch{}stop();};
+        }catch(err){
+          p.textContent='Scanner niet beschikbaar. Gebruik handmatig invoer.';
+        }
+      };
+      script.onerror=()=>{p.textContent='Scanner kon niet laden. Gebruik handmatig invoer.';};
+      document.head.appendChild(script);
+    }
+  }catch(err){
+    console.log('Camera error:',err);
+    const code=prompt('Camera niet beschikbaar.\nVoer barcode handmatig in:');
+    if(code)await fetchBarcode(code.trim());
+  }
 }
 
 async function fetchBarcode(code){
   try{
-    const res=await fetch(`https://world.openfoodfacts.org/api/v0/product/${code}.json`);
+    const res=await fetch('https://world.openfoodfacts.org/api/v0/product/'+code+'.json');
     const data=await res.json();
     if(data.status===1&&data.product){
       const p=data.product,n=p.nutriments;
@@ -1217,90 +1456,130 @@ async function fetchBarcode(code){
       scanPer100={kcal:n['energy-kcal_100g']||0,eiwit:n['proteins_100g']||0,carbs:n['carbohydrates_100g']||0,vet:n['fat_100g']||0,zout:n['salt_100g']||0};
       activeScanPer100=scanPer100;
       document.getElementById('vNaam').value=naam;
-      document.getElementById('vHoeveelheid').value='100';herbereken();
+      document.getElementById('vHoeveelheid').value='100';
+      document.getElementById('vAantal').value='1';
+      herbereken();
       const sr=document.getElementById('scanResult');sr.style.display='block';sr.textContent='✓ Gevonden: '+naam;
       const ref=document.getElementById('per100Ref');ref.style.display='block';
-      ref.textContent=`Per 100g: ${Math.round(scanPer100.kcal)} kcal · ${scanPer100.eiwit}g eiwit · ${scanPer100.carbs}g carbs · ${scanPer100.vet}g vet`;
-    } else alert('Product niet gevonden. Vul handmatig in.');
-  }catch{alert('Fout bij ophalen productinfo.');}
+      ref.textContent='Per 100g: '+Math.round(scanPer100.kcal)+' kcal · '+scanPer100.eiwit+'g eiwit · '+scanPer100.carbs+'g carbs · '+scanPer100.vet+'g vet';
+    } else {
+      alert('Product niet gevonden in Open Food Facts.\nVul de gegevens handmatig in.');
+    }
+  }catch(err){alert('Fout bij ophalen productinfo. Controleer je internetverbinding.');}
 }
 
 function saveVoeding(){
   const naam=document.getElementById('vNaam').value.trim();if(!naam){alert('Vul een productnaam in.');return;}
-  voedingData.push({id:Date.now().toString(),datum:document.getElementById('vDatum').value||todayStr(),naam,
+  const maaltijd=document.getElementById('vMaaltijd').value||'overig';
+  voedingData.push({
+    id:Date.now().toString(),
+    datum:document.getElementById('vDatum').value||todayStr(),
+    naam,maaltijd,
     hoeveelheid:parseFloat(document.getElementById('vHoeveelheid').value)||0,
+    aantal:parseFloat(document.getElementById('vAantal').value)||1,
     kcal:parseFloat(document.getElementById('vKcal').value)||0,
     eiwit:parseFloat(document.getElementById('vEiwit').value)||0,
     carbs:parseFloat(document.getElementById('vCarbs').value)||0,
     vet:parseFloat(document.getElementById('vVet').value)||0,
-    zout:parseFloat(document.getElementById('vZout').value)||0});
+    zout:parseFloat(document.getElementById('vZout').value)||0
+  });
   saveVoedingStore();closeVoeding();renderVoeding();
 }
+
+const MAALTIJDEN=[
+  {id:'ontbijt',label:'🌅 Ontbijt'},
+  {id:'lunch',label:'☀️ Lunch'},
+  {id:'avondeten',label:'🍽 Avondeten'},
+  {id:'tussendoor',label:'🍎 Tussendoortjes'},
+];
 
 function renderVoeding(){
   const range=getVoedingRange();
   document.getElementById('voedingPeriodLabel').textContent=range.label;
   const pd=voedingData.filter(p=>p.datum>=range.start&&p.datum<=range.end);
+
   const tKcal=pd.reduce((a,p)=>a+p.kcal,0);
   const tEiwit=pd.reduce((a,p)=>a+p.eiwit,0);
   const tCarbs=pd.reduce((a,p)=>a+p.carbs,0);
   const tVet=pd.reduce((a,p)=>a+p.vet,0);
   const tZout=pd.reduce((a,p)=>a+(p.zout||0),0);
 
-  const doelKcal=voedingPeriod==='dag'?2500:voedingPeriod==='week'?17500:75000;
-  const doelEiwit=voedingPeriod==='dag'?160:voedingPeriod==='week'?1120:4800;
-  const doelVet=voedingPeriod==='dag'?80:voedingPeriod==='week'?560:2400;
-  const doelZout=voedingPeriod==='dag'?6:voedingPeriod==='week'?42:180;
+  const today=todayStr();
+  // Aantal dagen in range voor week/maand/jaar gemiddelde
+  const d1=new Date(range.start),d2=new Date(range.end);
+  const dagMultiplier=Math.max(1,Math.round((d2-d1)/(1000*60*60*24))+1);
+  const doel={kcal:voedingDoelen.kcal*dagMultiplier,eiwit:voedingDoelen.eiwit*dagMultiplier,carbs:voedingDoelen.carbs*dagMultiplier,vet:voedingDoelen.vet*dagMultiplier,zout:voedingDoelen.zout*dagMultiplier};
 
   document.getElementById('voedingStats').innerHTML=`
     <div class="macro-tiles">
       <div class="macro-tile" style="grid-column:1/-1">
         <div style="display:flex;justify-content:space-between;align-items:baseline">
           <div><div class="macro-tile-val" style="color:var(--amber-text);font-size:28px">${Math.round(tKcal)}</div><div class="macro-tile-lbl">kcal</div></div>
-          <div style="font-size:10px;color:var(--muted)">Doel: ${doelKcal.toLocaleString('nl')} kcal</div>
+          <div style="text-align:right;font-size:10px;color:var(--muted)">Doel: ${Math.round(doel.kcal).toLocaleString('nl')} kcal</div>
         </div>
-        <div class="macro-tile-bar" style="margin-top:8px;height:5px"><div class="macro-tile-fill" style="width:${Math.min(100,tKcal/doelKcal*100).toFixed(0)}%;background:var(--amber)"></div></div>
+        <div class="macro-tile-bar" style="margin-top:8px;height:5px"><div class="macro-tile-fill" style="width:${Math.min(100,tKcal/doel.kcal*100).toFixed(0)}%;background:var(--amber)"></div></div>
       </div>
       <div class="macro-tile">
         <div class="macro-tile-val" style="color:var(--blue-text)">${tEiwit.toFixed(0)}g</div>
         <div class="macro-tile-lbl">Eiwitten</div>
-        <div class="macro-tile-bar"><div class="macro-tile-fill" style="width:${Math.min(100,tEiwit/doelEiwit*100).toFixed(0)}%;background:var(--blue)"></div></div>
+        <div class="macro-tile-bar"><div class="macro-tile-fill" style="width:${Math.min(100,tEiwit/doel.eiwit*100).toFixed(0)}%;background:var(--blue)"></div></div>
       </div>
       <div class="macro-tile">
         <div class="macro-tile-val" style="color:var(--green)">${tCarbs.toFixed(0)}g</div>
         <div class="macro-tile-lbl">Koolhydraten</div>
-        <div class="macro-tile-bar"><div class="macro-tile-fill" style="width:${Math.min(100,tCarbs/300*100).toFixed(0)}%;background:var(--green)"></div></div>
+        <div class="macro-tile-bar"><div class="macro-tile-fill" style="width:${Math.min(100,tCarbs/doel.carbs*100).toFixed(0)}%;background:var(--green)"></div></div>
       </div>
       <div class="macro-tile">
         <div class="macro-tile-val" style="color:var(--purple-text)">${tVet.toFixed(0)}g</div>
         <div class="macro-tile-lbl">Vetten</div>
-        <div class="macro-tile-bar"><div class="macro-tile-fill" style="width:${Math.min(100,tVet/doelVet*100).toFixed(0)}%;background:var(--purple)"></div></div>
+        <div class="macro-tile-bar"><div class="macro-tile-fill" style="width:${Math.min(100,tVet/doel.vet*100).toFixed(0)}%;background:var(--purple)"></div></div>
       </div>
       <div class="macro-tile">
         <div class="macro-tile-val" style="color:var(--red-text)">${tZout.toFixed(1)}g</div>
         <div class="macro-tile-lbl">Zout</div>
-        <div class="macro-tile-bar"><div class="macro-tile-fill" style="width:${Math.min(100,tZout/doelZout*100).toFixed(0)}%;background:var(--red)"></div></div>
+        <div class="macro-tile-bar"><div class="macro-tile-fill" style="width:${Math.min(100,tZout/doel.zout*100).toFixed(0)}%;background:var(--red)"></div></div>
       </div>
     </div>`;
 
-  // Dagen in range
+  // Groepeer per dag
   const dagen=[...new Set(pd.map(p=>p.datum))].sort((a,b)=>b.localeCompare(a));
-  const today=todayStr();
-  document.getElementById('voedingDagen').innerHTML=dagen.length?dagen.map(dag=>{
-    const dd=voedingData.filter(p=>p.datum===dag);
-    const dK=dd.reduce((a,p)=>a+p.kcal,0),dE=dd.reduce((a,p)=>a+p.eiwit,0);
+  const days=['Zo','Ma','Di','Wo','Do','Vr','Za'];
+
+  document.getElementById('voedingDagen').innerHTML = dagen.length ? dagen.map(dag=>{
+    const dagData=voedingData.filter(p=>p.datum===dag);
+    const dKcal=dagData.reduce((a,p)=>a+p.kcal,0);
     const d=new Date(dag+'T12:00:00');
-    const dys=['Zo','Ma','Di','Wo','Do','Vr','Za'];
+    const dagLabel=dag===today?'Vandaag':dag===new Date(new Date().setDate(new Date().getDate()-1)).toISOString().slice(0,10)?'Gisteren':days[d.getDay()]+' '+dag.slice(5);
+
+    // Maaltijdsecties
+    const maaltijdHtml=MAALTIJDEN.map(m=>{
+      const items=dagData.filter(p=>(p.maaltijd||'avondeten')===m.id);
+      if(!items.length) return '';
+      const mKcal=items.reduce((a,p)=>a+p.kcal,0);
+      return `<div style="border-top:1px solid var(--border)">
+        <div style="padding:5px 12px;background:var(--surface2);display:flex;justify-content:space-between;align-items:center">
+          <div style="font-size:11px;font-weight:700;color:var(--muted)">${m.label}</div>
+          <div style="font-size:10px;color:var(--muted)">${Math.round(mKcal)} kcal</div>
+        </div>
+        ${items.map(p=>`<div class="product-item">
+          <div class="product-name">${p.naam}${p.hoeveelheid?' · '+(p.aantal&&p.aantal!==1?p.aantal+'×':'')+p.hoeveelheid+'g':''}</div>
+          <div style="font-size:11px;color:var(--amber-text);flex-shrink:0">${Math.round(p.kcal)} kcal</div>
+          <button onclick="deleteVoeding('${p.id}')" style="background:none;border:none;color:var(--surface3);font-size:14px;cursor:pointer;padding:0 0 0 6px">✕</button>
+        </div>`).join('')}
+      </div>`;
+    }).join('');
+
     return `<div class="voeding-day">
       <div class="voeding-day-header">
-        <div><div style="font-size:13px;font-weight:600">${dag===today?'Vandaag':dys[d.getDay()]+' '+dag.slice(5)}</div>
-        <div style="font-size:10px;color:var(--muted);margin-top:1px">${Math.round(dK)} kcal · ${dE.toFixed(0)}g eiwit</div></div>
+        <div><div style="font-size:13px;font-weight:600">${dagLabel}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:1px">${Math.round(dKcal)} kcal totaal</div></div>
       </div>
-      ${dd.map(p=>`<div class="product-item"><div class="product-name">${p.naam}${p.hoeveelheid?' ('+p.hoeveelheid+'g)':''}</div><div style="font-size:11px;color:var(--amber-text);flex-shrink:0">${Math.round(p.kcal)} kcal</div><button onclick="deleteVoeding('${p.id}')" style="background:none;border:none;color:var(--surface3);font-size:14px;cursor:pointer;padding:0 0 0 6px">✕</button></div>`).join('')}
+      ${maaltijdHtml}
     </div>`;
-  }).join(''):'<div style="font-size:12px;color:var(--muted);text-align:center;padding:20px 0">Geen producten in deze periode.</div>';
+  }).join('') : '<div style="font-size:12px;color:var(--muted);text-align:center;padding:24px 0">Geen producten in deze periode.</div>';
 }
 function deleteVoeding(id){voedingData=voedingData.filter(p=>p.id!==id);saveVoedingStore();renderVoeding();}
+
 
 
 // BIBLIOTHEEK
