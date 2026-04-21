@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MijnTraining">
+<meta name="theme-color" content="#0d1117">
+<link rel="manifest" href="manifest.json">
+<title>MijnTraining</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0d1117;
+  --surface:#161b22;
+  --surface2:#21262d;
+  --surface3:#30363d;
+  --border:#30363d;
+  --text:#e6edf3;
+  --muted:#8b949e;
+  --green:#3fb950;
+  --green-dim:#1a3a1e;
+  --green-text:#56d364;
+  --amber:#d29922;
+  --amber-dim:#3a2a00;
+  --amber-text:#e3b341;
+  --blue:#388bfd;
+  --blue-dim:#0d2044;
+  --blue-text:#79c0ff;
+  --red:#f85149;
+  --red-dim:#3a0d0a;
+  --red-text:#ff7b72;
+  --purple:#bc8cff;
+  --purple-dim:#2a1a4a;
+  --purple-text:#d2a8ff;
+  --radius:12px;
+  --radius-sm:8px;
+  --safe-top:env(safe-area-inset-top, 0px);
+  --safe-bot:env(safe-area-inset-bottom, 0px);
+}
+body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+input,textarea,select,button{font-family:'Barlow',sans-serif}
+
+/* LAYOUT */
+.app{display:flex;flex-direction:column;min-height:100vh;max-width:430px;margin:0 auto}
+.statusbar{height:var(--safe-top);background:var(--bg)}
+.topbar{padding:12px 16px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:var(--bg);position:sticky;top:0;z-index:50}
+.topbar-logo{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:700;letter-spacing:1px;color:var(--text)}
+.topbar-logo span{color:var(--green)}
+.topbar-date{font-size:12px;color:var(--muted)}
+.main{flex:1;overflow-y:auto;padding-bottom:calc(70px + var(--safe-bot))}
+.navbar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--surface);border-top:1px solid var(--border);display:flex;padding-bottom:var(--safe-bot);z-index:99}
+.nav-btn{flex:1;border:none;background:transparent;color:var(--muted);padding:10px 4px 12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;letter-spacing:.3px;transition:color .15s}
+.nav-btn.active{color:var(--green)}
+.nav-ico{font-size:22px;line-height:1}
+
+/* PAGES */
+.page{display:none;animation:fadein .2s ease}
+.page.active{display:block}
+@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* CALENDAR PAGE */
+.cal-nav-row{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 8px}
+.cal-arrow{background:var(--surface2);border:1px solid var(--border);color:var(--text);width:34px;height:34px;border-radius:var(--radius-sm);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.cal-month-label{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;letter-spacing:.5px}
+.cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);padding:0 8px}
+.cal-wd{text-align:center;font-size:11px;color:var(--muted);padding:4px 0;font-weight:600;letter-spacing:.5px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);padding:0 8px 8px;gap:2px}
+.cal-cell{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:5px;cursor:pointer;border-radius:var(--radius-sm);transition:background .1s;position:relative}
+.cal-cell:hover{background:var(--surface2)}
+.cal-cell.today .cal-num{background:var(--green);color:#0d1117;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-weight:700}
+.cal-cell.selected{background:var(--surface2);outline:1px solid var(--green)}
+.cal-cell.other .cal-num{color:var(--surface3)}
+.cal-num{font-size:13px;font-weight:500}
+.cal-dots{display:flex;gap:2px;margin-top:3px}
+.cdot{width:5px;height:5px;border-radius:50%}
+.cdot-k{background:var(--purple)}
+.cdot-co{background:var(--green)}
+.cdot-ci{background:var(--amber)}
+.cdot-r{background:var(--red)}
+
+/* DAY DETAIL */
+.day-card{margin:0 12px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.day-card-header{padding:10px 14px 8px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.day-card-title{font-size:14px;font-weight:600;color:var(--text)}
+.day-card-body{padding:8px 14px 10px}
+.session-item{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);cursor:pointer}
+.session-item:last-child{border-bottom:none}
+.session-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.session-name{font-size:13px;font-weight:500;flex:1}
+.session-meta{font-size:11px;color:var(--muted)}
+.session-arrow{color:var(--muted);font-size:14px}
+.no-sessions{font-size:13px;color:var(--muted);padding:6px 0}
+.add-btn{width:calc(100% - 24px);margin:0 12px 12px;padding:11px;background:var(--green-dim);border:1px dashed var(--green);border-radius:var(--radius);color:var(--green-text);font-size:14px;font-weight:600;cursor:pointer;letter-spacing:.3px}
+.add-btn:active{opacity:.7}
+
+/* LEGENDA */
+.legend{display:flex;gap:12px;padding:4px 12px 10px;flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)}
+.legend-dot{width:8px;height:8px;border-radius:50%}
+
+/* PROGRESS PAGE */
+.section-title{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;letter-spacing:.5px;padding:14px 16px 8px;color:var(--text)}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 12px 8px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px}
+.stat-val{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:700;line-height:1}
+.stat-lbl{font-size:11px;color:var(--muted);margin-top:3px}
+.exercise-list{padding:0 12px}
+.ex-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:8px;cursor:pointer}
+.ex-card:active{opacity:.8}
+.ex-name{font-size:14px;font-weight:600}
+.ex-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.ex-pr{font-size:12px;margin-top:6px;padding:3px 8px;border-radius:20px;display:inline-block;font-weight:600}
+.ex-pr.k{background:var(--purple-dim);color:var(--purple-text)}
+.chart-wrap{padding:0 12px 8px}
+.chart-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px}
+.chart-title{font-size:13px;font-weight:600;margin-bottom:10px}
+.bar-chart{display:flex;align-items:flex-end;gap:4px;height:80px}
+.bar{flex:1;background:var(--surface3);border-radius:4px 4px 0 0;position:relative;transition:height .4s;cursor:default;min-width:0}
+.bar.k{background:var(--purple)}
+.bar.co{background:var(--green)}
+.bar.ci{background:var(--amber)}
+.bar.r{background:var(--red)}
+.bar-lbl{font-size:9px;color:var(--muted);text-align:center;margin-top:3px}
+.bar-container{display:flex;flex-direction:column}
+
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;align-items:flex-end;justify-content:center}
+.overlay.open{display:flex}
+.sheet{background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-width:430px;padding:16px 16px calc(20px + var(--safe-bot));max-height:90vh;overflow-y:auto}
+.sheet-handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px}
+.sheet-title{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;margin-bottom:16px;letter-spacing:.5px}
+
+/* TYPE SELECTOR */
+.type-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.type-opt{border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;cursor:pointer;transition:all .15s}
+.type-opt:active{opacity:.7}
+.type-opt.sel-k{border-color:var(--purple);background:var(--purple-dim)}
+.type-opt.sel-co{border-color:var(--green);background:var(--green-dim)}
+.type-opt.sel-ci{border-color:var(--amber);background:var(--amber-dim)}
+.type-opt.sel-r{border-color:var(--red);background:var(--red-dim)}
+.type-opt-title{font-size:13px;font-weight:600}
+.type-opt-sub{font-size:10px;color:var(--muted);margin-top:2px}
+.field-label{font-size:11px;color:var(--muted);margin-bottom:5px;margin-top:12px;font-weight:600;letter-spacing:.3px;text-transform:uppercase}
+.field-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;color:var(--text);font-size:14px;outline:none}
+.field-input:focus{border-color:var(--green)}
+.field-row{display:grid;grid-template-columns:1fr 80px 80px 36px;gap:6px;align-items:center;margin-bottom:6px}
+.field-row-3{display:grid;grid-template-columns:1fr 80px 80px;gap:6px;align-items:center;margin-bottom:6px}
+.field-sm{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;color:var(--text);font-size:13px;outline:none;width:100%}
+.field-sm:focus{border-color:var(--green)}
+.del-btn{background:var(--red-dim);border:1px solid var(--red);color:var(--red-text);border-radius:var(--radius-sm);width:36px;height:36px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.add-oef-btn{background:none;border:1px dashed var(--border);border-radius:var(--radius-sm);padding:8px;color:var(--muted);font-size:13px;cursor:pointer;width:100%;margin-top:4px}
+.save-btn{width:100%;padding:13px;background:var(--green);border:none;border-radius:var(--radius);color:#0d1117;font-size:15px;font-weight:700;cursor:pointer;margin-top:16px;letter-spacing:.5px}
+.save-btn:active{opacity:.8}
+.cancel-btn{width:100%;padding:10px;background:none;border:1px solid var(--border);border-radius:var(--radius);color:var(--muted);font-size:14px;cursor:pointer;margin-top:8px}
+
+/* CARDIO FIELDS */
+.cardio-fields{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+
+/* SESSION DETAIL VIEW */
+.detail-header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 16px}
+.detail-tag{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:4px 10px;border-radius:20px;font-weight:600;margin-bottom:8px}
+.detail-tag.k{background:var(--purple-dim);color:var(--purple-text)}
+.detail-tag.co{background:var(--green-dim);color:var(--green-text)}
+.detail-tag.ci{background:var(--amber-dim);color:var(--amber-text)}
+.detail-tag.r{background:var(--red-dim);color:var(--red-text)}
+.detail-date{font-size:12px;color:var(--muted)}
+.detail-title{font-size:18px;font-weight:700;margin:4px 0}
+.detail-body{padding:12px}
+.detail-oef-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:8px}
+.detail-oef-name{font-size:14px;font-weight:700;margin-bottom:8px}
+.sets-table{width:100%;border-collapse:collapse}
+.sets-table th{font-size:10px;color:var(--muted);text-align:left;padding:0 0 6px;font-weight:600;letter-spacing:.3px;text-transform:uppercase}
+.sets-table td{font-size:13px;padding:4px 0;border-top:1px solid var(--border)}
+.detail-note{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:8px}
+.detail-note-lbl{font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.3px;text-transform:uppercase;margin-bottom:4px}
+.back-btn{background:none;border:none;color:var(--green);font-size:14px;cursor:pointer;display:flex;align-items:center;gap:4px;padding:0}
+
+/* RESERVIST PAGE */
+.res-card{margin:0 12px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.res-card-header{padding:10px 14px;background:var(--red-dim);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.res-card-title{font-size:14px;font-weight:700;color:var(--red-text)}
+.res-body{padding:10px 14px}
+.res-stat-row{display:flex;gap:12px;margin-bottom:8px}
+.res-stat{flex:1;background:var(--surface2);border-radius:var(--radius-sm);padding:8px 10px}
+.res-stat-v{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:700;color:var(--text)}
+.res-stat-l{font-size:10px;color:var(--muted)}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:0}
+.kwal-btn{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 4px;cursor:pointer;color:var(--text);font-size:18px;line-height:1.4;width:100%;transition:all .15s}
+.kwal-btn.sel{border-color:var(--amber);background:var(--amber-dim)}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="statusbar"></div>
+
+  <div class="topbar">
+    <div class="topbar-logo">KESSEL<span>TRAINING</span></div>
+    <div class="topbar-date" id="topbarDate"></div>
+  </div>
+
+  <div class="main">
+
+    <!-- KALENDER PAGE -->
+    <div class="page active" id="page-cal">
+      <div class="cal-nav-row">
+        <button class="cal-arrow" id="calPrev">&#8249;</button>
+        <div class="cal-month-label" id="calMonthLabel"></div>
+        <button class="cal-arrow" id="calNext">&#8250;</button>
+      </div>
+      <div class="cal-weekdays">
+        <div class="cal-wd">Ma</div><div class="cal-wd">Di</div><div class="cal-wd">Wo</div>
+        <div class="cal-wd">Do</div><div class="cal-wd">Vr</div><div class="cal-wd">Za</div><div class="cal-wd">Zo</div>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--purple)"></div>Kracht</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Cardio buiten</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div>Cardio binnen</div>
+      </div>
+      <div class="day-card" id="dayCard">
+        <div class="day-card-header">
+          <div class="day-card-title" id="dayCardTitle">Selecteer een dag</div>
+        </div>
+        <div class="day-card-body" id="dayCardBody">
+          <div class="no-sessions">Tik op een dag om sessies te zien.</div>
+        </div>
+      </div>
+      <button class="add-btn" id="addSessionBtn">+ Sessie toevoegen</button>
+    </div>
+
+    <!-- PROGRESS PAGE -->
+    <div class="page" id="page-progress">
+      <div class="section-title">Overzicht</div>
+      <div class="stat-grid" id="statGrid"></div>
+      <div class="chart-wrap">
+        <div class="chart-box">
+          <div class="chart-title">Sessies afgelopen 8 weken</div>
+          <div id="barChartWrap"></div>
+        </div>
+      </div>
+      <div class="section-title">Persoonlijke records</div>
+      <div class="exercise-list" id="exerciseList"></div>
+      <div class="section-title" style="padding-top:4px">Back-up & herstel</div>
+      <div style="margin:0 12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Exporteer al je data als back-up bestand, of importeer een eerder opgeslagen back-up.</div>
+        <button onclick="exportData()" style="width:100%;padding:11px;background:var(--green-dim);border:1px solid var(--green);border-radius:var(--radius-sm);color:var(--green-text);font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px">⬇ Exporteer back-up</button>
+        <label style="display:block;width:100%;padding:11px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--muted);font-size:14px;font-weight:700;cursor:pointer;text-align:center">
+          ⬆ Importeer back-up
+          <input type="file" accept=".json" onchange="importData(event)" style="display:none">
+        </label>
+        <div id="backupMsg" style="font-size:12px;color:var(--green-text);margin-top:8px;display:none"></div>
+      </div>
+    </div>
+
+    <!-- LICHAAM PAGE -->
+    <div class="page" id="page-lichaam">
+      <div class="section-title">Gewicht &amp; Slaap</div>
+      <div class="stat-grid" id="lichaamStats"></div>
+      <div class="chart-wrap" style="margin-top:4px">
+        <div class="chart-box">
+          <div class="chart-title">Gewicht — afgelopen 30 dagen</div>
+          <canvas id="gewichtChart" height="90"></canvas>
+        </div>
+      </div>
+      <div class="chart-wrap" style="margin-top:0">
+        <div class="chart-box">
+          <div class="chart-title">Slaap — afgelopen 14 dagen</div>
+          <canvas id="slaapChart" height="90"></canvas>
+        </div>
+      </div>
+      <div class="section-title" style="padding-top:8px">Logboek</div>
+      <div id="lichaamLog"></div>
+      <button class="add-btn" id="addLichaamBtn" style="margin:0 12px 12px;width:calc(100% - 24px)">+ Gewicht &amp; slaap invullen</button>
+    </div>
+
+    <!-- RESERVIST PAGE -->
+    <div class="page" id="page-res">
+      <div class="section-title">Reservisten</div>
+      <div id="resStats"></div>
+      <div id="resSessions"></div>
+      <button class="add-btn" id="addResBtn" style="margin:0 12px;width:calc(100% - 24px)">+ Reservist sessie toevoegen</button>
+    </div>
+
+  </div><!-- /main -->
+
+  <nav class="navbar">
+    <button class="nav-btn active" data-page="cal">
+      <div class="nav-ico">📅</div><div>Kalender</div>
+    </button>
+    <button class="nav-btn" data-page="progress">
+      <div class="nav-ico">📈</div><div>Progressie</div>
+    </button>
+    <button class="nav-btn" data-page="lichaam">
+      <div class="nav-ico">⚖️</div><div>Lichaam</div>
+    </button>
+    <button class="nav-btn" data-page="res">
+      <div class="nav-ico">🪖</div><div>Reservist</div>
+    </button>
+  </nav>
+</div>
+
+<!-- LOG MODAL -->
+<div class="overlay" id="logOverlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Sessie toevoegen</div>
+
+    <div class="type-grid">
+      <div class="type-opt" data-type="kracht" onclick="selType('kracht',this)">
+        <div class="type-opt-title">💪 Kracht</div>
+        <div class="type-opt-sub">Bodybuilding</div>
+      </div>
+      <div class="type-opt" data-type="cardio-out" onclick="selType('cardio-out',this)">
+        <div class="type-opt-title">🏃 Cardio buiten</div>
+        <div class="type-opt-sub">Hardlopen etc.</div>
+      </div>
+      <div class="type-opt" data-type="cardio-in" onclick="selType('cardio-in',this)">
+        <div class="type-opt-title">🏋️ Cardio binnen</div>
+        <div class="type-opt-sub">Deadlift, push-ups...</div>
+      </div>
+      <div class="type-opt" data-type="reservist" onclick="selType('reservist',this)">
+        <div class="type-opt-title">🪖 Reservist</div>
+        <div class="type-opt-sub">Militaire training</div>
+      </div>
+    </div>
+
+    <div id="logFields"></div>
+
+    <button class="save-btn" onclick="saveSession()">Opslaan</button>
+    <button class="cancel-btn" onclick="closeModal()">Annuleren</button>
+  </div>
+</div>
+
+<!-- LICHAAM MODAL -->
+<div class="overlay" id="lichaamOverlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Gewicht &amp; Slaap</div>
+    <div class="field-label">Datum</div>
+    <input class="field-input" type="date" id="lDatum">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px">
+      <div>
+        <div class="field-label">Gewicht (kg)</div>
+        <input class="field-input" type="number" step="0.1" id="lGewicht" placeholder="82.5">
+      </div>
+      <div>
+        <div class="field-label">Slaap (uren)</div>
+        <input class="field-input" type="number" step="0.25" id="lSlaap" placeholder="7.5">
+      </div>
+    </div>
+    <div class="field-label" style="margin-top:12px">Slaapkwaliteit</div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:4px" id="kwalGrid">
+      <button onclick="selKwal(1,this)" class="kwal-btn">😴<br><span style="font-size:10px">Slecht</span></button>
+      <button onclick="selKwal(2,this)" class="kwal-btn">😕<br><span style="font-size:10px">Matig</span></button>
+      <button onclick="selKwal(3,this)" class="kwal-btn">😐<br><span style="font-size:10px">Oké</span></button>
+      <button onclick="selKwal(4,this)" class="kwal-btn">😊<br><span style="font-size:10px">Goed</span></button>
+      <button onclick="selKwal(5,this)" class="kwal-btn">😁<br><span style="font-size:10px">Top</span></button>
+    </div>
+    <div class="field-label">Notities</div>
+    <textarea class="field-input" id="lNotes" rows="2" placeholder="Hoe voel je je? bijzonderheden..."></textarea>
+    <button class="save-btn" onclick="saveLichaam()">Opslaan</button>
+    <button class="cancel-btn" onclick="closeLichaam()">Annuleren</button>
+  </div>
+</div>
+
+<!-- DETAIL OVERLAY -->
+<div class="overlay" id="detailOverlay">
+  <div class="sheet" id="detailSheet"></div>
+</div>
+
+<script>
+// ---- STATE ----
+let sessions = JSON.parse(localStorage.getItem('sessions') || '[]');
+let selectedDate = todayStr();
+let currentType = null;
+let viewYear, viewMonth;
+let editId = null;
+
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+}
+function pad(n){return n<10?'0'+n:n}
+function save(){localStorage.setItem('sessions', JSON.stringify(sessions))}
+
+// ---- TOPBAR DATE ----
+function updateTopbar(){
+  const d = new Date();
+  const days=['zondag','maandag','dinsdag','woensdag','donderdag','vrijdag','zaterdag'];
+  const months=['jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec'];
+  document.getElementById('topbarDate').textContent = days[d.getDay()]+' '+d.getDate()+' '+months[d.getMonth()];
+}
+updateTopbar();
+
+// ---- NAV ----
+document.querySelectorAll('.nav-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('page-'+btn.dataset.page).classList.add('active');
+    if(btn.dataset.page==='progress') renderProgress();
+    if(btn.dataset.page==='res') renderRes();
+    if(btn.dataset.page==='lichaam') renderLichaam();
+  });
+});
+
+// ---- CALENDAR ----
+const now = new Date();
+viewYear = now.getFullYear();
+viewMonth = now.getMonth();
+
+function renderCal(){
+  const months=['Januari','Februari','Maart','April','Mei','Juni','Juli','Augustus','September','Oktober','November','December'];
+  document.getElementById('calMonthLabel').textContent = months[viewMonth]+' '+viewYear;
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML='';
+  const first = new Date(viewYear, viewMonth, 1);
+  let startDay = first.getDay()-1; if(startDay<0) startDay=6;
+  const daysInMonth = new Date(viewYear, viewMonth+1, 0).getDate();
+  const prevDays = new Date(viewYear, viewMonth, 0).getDate();
+  const today = todayStr();
+
+  for(let i=0;i<startDay;i++){
+    const d = prevDays - startDay + 1 + i;
+    const ds = (viewYear-1===viewMonth?viewYear-1:viewYear)+'-'+pad(viewMonth===0?12:viewMonth)+'-'+pad(d);
+    grid.appendChild(makeCell(d, ds, true));
+  }
+  for(let d=1;d<=daysInMonth;d++){
+    const ds = viewYear+'-'+pad(viewMonth+1)+'-'+pad(d);
+    const cell = makeCell(d, ds, false);
+    if(ds===today) cell.classList.add('today');
+    if(ds===selectedDate) cell.classList.add('selected');
+    grid.appendChild(cell);
+  }
+  const total = startDay + daysInMonth;
+  const remaining = total%7===0?0:7-(total%7);
+  for(let d=1;d<=remaining;d++){
+    const ds = viewYear+'-'+pad(viewMonth===11?1:viewMonth+2)+'-'+pad(d);
+    grid.appendChild(makeCell(d, ds, true));
+  }
+  renderDayCard();
+}
+
+function makeCell(num, dateStr, other){
+  const cell = document.createElement('div');
+  cell.className = 'cal-cell'+(other?' other':'');
+  cell.innerHTML = '<div class="cal-num">'+num+'</div><div class="cal-dots"></div>';
+  const dotsEl = cell.querySelector('.cal-dots');
+  const daySessions = sessions.filter(s=>s.date===dateStr);
+  const types = [...new Set(daySessions.map(s=>s.type))];
+  const dotMap = {'kracht':'cdot-k','cardio-out':'cdot-co','cardio-in':'cdot-ci','reservist':'cdot-co'};
+  types.forEach(t=>{
+    const dot=document.createElement('div');
+    dot.className='cdot '+(dotMap[t]||'');
+    dotsEl.appendChild(dot);
+  });
+  cell.onclick=()=>{
+    selectedDate=dateStr;
+    document.querySelectorAll('.cal-cell.selected').forEach(c=>c.classList.remove('selected'));
+    cell.classList.add('selected');
+    renderDayCard();
+  };
+  return cell;
+}
+
+document.getElementById('calPrev').onclick=()=>{viewMonth--;if(viewMonth<0){viewMonth=11;viewYear--;}renderCal()};
+document.getElementById('calNext').onclick=()=>{viewMonth++;if(viewMonth>11){viewMonth=0;viewYear++;}renderCal()};
+
+function renderDayCard(){
+  const d = new Date(selectedDate+'T12:00:00');
+  const days=['Zondag','Maandag','Dinsdag','Woensdag','Donderdag','Vrijdag','Zaterdag'];
+  const months=['januari','februari','maart','april','mei','juni','juli','augustus','september','oktober','november','december'];
+  document.getElementById('dayCardTitle').textContent = days[d.getDay()]+' '+d.getDate()+' '+months[d.getMonth()];
+  const body = document.getElementById('dayCardBody');
+  const daySessions = sessions.filter(s=>s.date===selectedDate);
+  if(!daySessions.length){
+    body.innerHTML='<div class="no-sessions">Geen sessies op deze dag.</div>';
+    return;
+  }
+  body.innerHTML='';
+  daySessions.forEach(s=>{
+    const item = document.createElement('div');
+    item.className='session-item';
+    const colors={'kracht':'var(--purple)','cardio-out':'var(--green)','cardio-in':'var(--amber)','reservist':'var(--red)'};
+    const labels={'kracht':'Kracht','cardio-out':'Cardio buiten','cardio-in':'Cardio binnen','reservist':'Reservist'};
+    item.innerHTML=`<div class="session-dot" style="background:${colors[s.type]}"></div>
+      <div class="session-name">${s.name||labels[s.type]}</div>
+      <div class="session-meta">${sessionMeta(s)}</div>
+      <div class="session-arrow">›</div>`;
+    item.onclick=()=>showDetail(s);
+    body.appendChild(item);
+  });
+}
+
+function sessionMeta(s){
+  if(s.type==='kracht') return (s.oefeningen||[]).length+' oef.';
+  if(s.type==='cardio-out') return (s.afstand||'?')+' km • '+(s.tijd||'?')+' min';
+  if(s.type==='cardio-in') return (s.tijd||'?')+' min';
+  if(s.type==='reservist') return (s.activiteit||'')+' '+(s.duur||'?')+'min';
+  return '';
+}
+
+// ---- ADD SESSION ----
+document.getElementById('addSessionBtn').onclick = ()=>openModal(null);
+document.getElementById('addResBtn').onclick = ()=>openModal('reservist');
+
+function openModal(preType){
+  currentType = preType;
+  editId = null;
+  document.getElementById('logFields').innerHTML='';
+  document.querySelectorAll('.type-opt').forEach(o=>{
+    o.className='type-opt';
+    if(preType && o.dataset.type===preType) selType(preType, o);
+  });
+  if(preType) renderLogFields();
+  document.getElementById('logOverlay').classList.add('open');
+}
+function closeModal(){
+  document.getElementById('logOverlay').classList.remove('open');
+  currentType=null; editId=null;
+}
+document.getElementById('logOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal()});
+
+function selType(t, el){
+  currentType=t;
+  document.querySelectorAll('.type-opt').forEach(o=>o.className='type-opt');
+  const map={'kracht':'sel-k','cardio-out':'sel-co','cardio-in':'sel-ci','reservist':'sel-r'};
+  el.className='type-opt '+(map[t]||'');
+  renderLogFields();
+}
+
+function renderLogFields(){
+  const c = document.getElementById('logFields');
+  if(!currentType){c.innerHTML='';return;}
+  let html='';
+  html+=`<div class="field-label">Datum</div>
+  <input class="field-input" type="date" id="fDate" value="${selectedDate}">`;
+
+  if(currentType==='kracht'){
+    html+=`<div class="field-label">Sessienaam (optioneel)</div>
+    <input class="field-input" id="fName" placeholder="bijv. Push dag, Borst & Triceps...">
+    <div class="field-label">Oefeningen</div>
+    <div id="oefLijst"></div>
+    <button class="add-oef-btn" onclick="addOefRow()">+ Oefening toevoegen</button>
+    <div class="field-label">Notities</div>
+    <textarea class="field-input" id="fNotes" rows="2" placeholder="Hoe voelde de sessie?"></textarea>`;
+  } else if(currentType==='cardio-out'){
+    html+=`<div class="field-label">Sessienaam (optioneel)</div>
+    <input class="field-input" id="fName" placeholder="bijv. Ochtendrun...">
+    <div class="cardio-fields">
+      <div>
+        <div class="field-label">Afstand (km)</div>
+        <input class="field-input" id="fAfstand" type="number" step="0.1" placeholder="5.2">
+      </div>
+      <div>
+        <div class="field-label">Tijd (min)</div>
+        <input class="field-input" id="fTijd" type="number" placeholder="28">
+      </div>
+    </div>
+    <div class="cardio-fields">
+      <div>
+        <div class="field-label">Tempo (min/km)</div>
+        <input class="field-input" id="fTempo" placeholder="auto">
+      </div>
+      <div>
+        <div class="field-label">Hartslag gem.</div>
+        <input class="field-input" id="fHr" type="number" placeholder="155">
+      </div>
+    </div>
+    <div class="field-label">Notities</div>
+    <textarea class="field-input" id="fNotes" rows="2" placeholder="Route, gevoel..."></textarea>`;
+  } else if(currentType==='cardio-in'){
+    html+=`<div class="field-label">Sessienaam (optioneel)</div>
+    <input class="field-input" id="fName" placeholder="bijv. Circuit training...">
+    <div class="field-label">Oefeningen</div>
+    <div id="oefLijst"></div>
+    <button class="add-oef-btn" onclick="addOefRow()">+ Oefening toevoegen</button>
+    <div class="field-label">Totale tijd (min)</div>
+    <input class="field-input" id="fTijd" type="number" placeholder="45">
+    <div class="field-label">Notities</div>
+    <textarea class="field-input" id="fNotes" rows="2" placeholder="Hoe voelde de sessie?"></textarea>`;
+  } else if(currentType==='reservist'){
+    html+=`<div class="field-label">Activiteit</div>
+    <input class="field-input" id="fActiviteit" placeholder="bijv. Conditietraining, Schietoefeningen...">
+    <div class="cardio-fields">
+      <div>
+        <div class="field-label">Duur (min)</div>
+        <input class="field-input" id="fDuur" type="number" placeholder="90">
+      </div>
+      <div>
+        <div class="field-label">Locatie</div>
+        <input class="field-input" id="fLoc" placeholder="Kazerne...">
+      </div>
+    </div>
+    <div class="field-label">Afstand afgelegd (km)</div>
+    <input class="field-input" id="fAfstand" type="number" step="0.1" placeholder="optioneel">
+    <div class="field-label">Notities</div>
+    <textarea class="field-input" id="fNotes" rows="2" placeholder="Bevindingen, aandachtspunten..."></textarea>`;
+  }
+  c.innerHTML=html;
+  if(currentType==='kracht'||currentType==='cardio-in') addOefRow();
+
+  // auto calc tempo
+  if(currentType==='cardio-out'){
+    ['fAfstand','fTijd'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el) el.addEventListener('input', calcTempo);
+    });
+  }
+}
+
+function calcTempo(){
+  const a=parseFloat(document.getElementById('fAfstand')?.value||0);
+  const t=parseFloat(document.getElementById('fTijd')?.value||0);
+  const tf=document.getElementById('fTempo');
+  if(!tf) return;
+  if(a>0&&t>0){
+    const min=Math.floor(t/a);
+    const sec=Math.round((t/a-min)*60);
+    tf.value=min+':'+(sec<10?'0':'')+sec;
+  }
+}
+
+function addOefRow(){
+  const list = document.getElementById('oefLijst');
+  if(!list) return;
+  const isKracht = currentType==='kracht';
+  const div=document.createElement('div');
+  div.style.marginBottom='6px';
+  if(isKracht){
+    div.innerHTML=`<div class="field-row-3" style="margin-bottom:4px">
+      <input class="field-sm" placeholder="Oefening" style="grid-column:1/-1">
+    </div>
+    <div id="setsOf_${Date.now()}"></div>
+    <button onclick="addSetRow(this)" style="background:none;border:1px dashed var(--border);border-radius:6px;padding:5px 10px;color:var(--muted);font-size:12px;cursor:pointer;width:100%;margin-bottom:6px">+ Set toevoegen</button>`;
+    list.appendChild(div);
+    addSetRow(div.querySelector('button'));
+  } else {
+    div.innerHTML=`<div class="field-row">
+      <input class="field-sm" placeholder="Oefening">
+      <input class="field-sm" placeholder="Sets" type="number" min="1">
+      <input class="field-sm" placeholder="Reps" type="number" min="1">
+      <button class="del-btn" onclick="this.closest('div').parentElement.remove()">✕</button>
+    </div>`;
+    list.appendChild(div);
+  }
+}
+
+function addSetRow(btn){
+  const parent=btn.previousElementSibling||btn.parentElement.querySelector('[id^=setsOf]');
+  const container = btn.previousElementSibling;
+  const row=document.createElement('div');
+  row.className='field-row';
+  const setNum=(container?container.children.length:0)+1;
+  row.innerHTML=`<input class="field-sm" placeholder="Set ${setNum}" value="Set ${setNum}" readonly style="color:var(--muted);font-size:12px">
+    <input class="field-sm" placeholder="Reps" type="number" min="1">
+    <input class="field-sm" placeholder="kg" type="number" step=".5">
+    <button class="del-btn" onclick="this.closest('.field-row').remove()">✕</button>`;
+  btn.before(row);
+}
+
+function saveSession(){
+  if(!currentType){alert('Selecteer een type sessie.');return;}
+  const date = document.getElementById('fDate')?.value || selectedDate;
+  const name = document.getElementById('fName')?.value||'';
+  const notes = document.getElementById('fNotes')?.value||'';
+  let session={id:editId||Date.now().toString(),type:currentType,date,name,notes};
+
+  if(currentType==='kracht'||currentType==='cardio-in'){
+    const list=document.getElementById('oefLijst');
+    const oefeningen=[];
+    if(list) list.querySelectorAll('div>div').forEach(oefDiv=>{
+      if(currentType==='kracht'){
+        const nameEl=oefDiv.querySelector('input[placeholder="Oefening"]');
+        if(!nameEl) return;
+        const n=nameEl.value.trim();
+        if(!n) return;
+        const sets=[];
+        oefDiv.parentElement.querySelectorAll('.field-row').forEach(row=>{
+          const inputs=row.querySelectorAll('input');
+          if(inputs.length>=3){
+            const reps=inputs[1].value; const kg=inputs[2].value;
+            if(reps||kg) sets.push({reps:reps||'-',kg:kg||'-'});
+          }
+        });
+        oefeningen.push({naam:n,sets});
+      } else {
+        const inputs=oefDiv.querySelectorAll('.field-row input');
+        if(inputs.length>=3 && inputs[0].value.trim())
+          oefeningen.push({naam:inputs[0].value.trim(),sets:inputs[1].value||'-',reps:inputs[2].value||'-'});
+      }
+    });
+    session.oefeningen=oefeningen;
+    if(currentType==='cardio-in') session.tijd=document.getElementById('fTijd')?.value||'';
+  }
+  if(currentType==='cardio-out'){
+    session.afstand=document.getElementById('fAfstand')?.value||'';
+    session.tijd=document.getElementById('fTijd')?.value||'';
+    session.tempo=document.getElementById('fTempo')?.value||'';
+    session.hr=document.getElementById('fHr')?.value||'';
+  }
+  if(currentType==='reservist'){
+    session.activiteit=document.getElementById('fActiviteit')?.value||'';
+    session.duur=document.getElementById('fDuur')?.value||'';
+    session.locatie=document.getElementById('fLoc')?.value||'';
+    session.afstand=document.getElementById('fAfstand')?.value||'';
+  }
+
+  if(editId) sessions=sessions.filter(s=>s.id!==editId);
+  sessions.push(session);
+  save();
+  closeModal();
+  selectedDate=date;
+  renderCal();
+}
+
+// ---- DETAIL VIEW ----
+function showDetail(s){
+  const labels={'kracht':'💪 Kracht','cardio-out':'🏃 Cardio buiten','cardio-in':'🏋️ Cardio binnen','reservist':'🪖 Reservist'};
+  const cls={'kracht':'k','cardio-out':'co','cardio-in':'ci','reservist':'r'};
+  const d=new Date(s.date+'T12:00:00');
+  const days=['Zondag','Maandag','Dinsdag','Woensdag','Donderdag','Vrijdag','Zaterdag'];
+  const months=['januari','februari','maart','april','mei','juni','juli','augustus','september','oktober','november','december'];
+  let body=`<div class="sheet-handle"></div>
+    <div class="detail-tag ${cls[s.type]}">${labels[s.type]}</div>
+    <div class="detail-date">${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}</div>
+    <div class="detail-title">${s.name||labels[s.type]}</div>`;
+
+  if(s.type==='kracht'){
+    (s.oefeningen||[]).forEach(o=>{
+      body+=`<div class="detail-oef-card"><div class="detail-oef-name">${o.naam}</div>
+        <table class="sets-table"><tr><th>Set</th><th>Reps</th><th>Gewicht</th></tr>`;
+      (o.sets||[]).forEach((set,i)=>{
+        body+=`<tr><td>${i+1}</td><td>${set.reps}</td><td>${set.kg} kg</td></tr>`;
+      });
+      body+='</table></div>';
+    });
+  } else if(s.type==='cardio-out'){
+    body+=`<div class="detail-oef-card">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:600">Afstand</div><div style="font-size:22px;font-weight:700;font-family:Barlow Condensed">${s.afstand||'-'} km</div></div>
+        <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:600">Tijd</div><div style="font-size:22px;font-weight:700;font-family:Barlow Condensed">${s.tijd||'-'} min</div></div>
+        <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:600">Tempo</div><div style="font-size:22px;font-weight:700;font-family:Barlow Condensed">${s.tempo||'-'}</div></div>
+        <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:600">Hartslag</div><div style="font-size:22px;font-weight:700;font-family:Barlow Condensed">${s.hr||'-'} bpm</div></div>
+      </div></div>`;
+  } else if(s.type==='cardio-in'){
+    body+=`<div class="detail-oef-card">
+      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:600;margin-bottom:6px">Oefeningen</div>`;
+    (s.oefeningen||[]).forEach(o=>{
+      body+=`<div style="padding:5px 0;border-top:1px solid var(--border);font-size:13px">${o.naam} — ${o.sets} sets × ${o.reps} reps</div>`;
+    });
+    body+=`<div style="margin-top:8px;font-size:13px;color:var(--muted)">Totale tijd: ${s.tijd||'-'} min</div></div>`;
+  } else if(s.type==='reservist'){
+    body+=`<div class="detail-oef-card">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:600">Activiteit</div><div style="font-size:15px;font-weight:600">${s.activiteit||'-'}</div></div>
+        <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:600">Duur</div><div style="font-size:22px;font-weight:700;font-family:Barlow Condensed">${s.duur||'-'} min</div></div>
+        ${s.afstand?`<div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:600">Afstand</div><div style="font-size:22px;font-weight:700;font-family:Barlow Condensed">${s.afstand} km</div></div>`:''}
+        ${s.locatie?`<div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:600">Locatie</div><div style="font-size:15px;font-weight:600">${s.locatie}</div></div>`:''}
+      </div></div>`;
+  }
+
+  if(s.notes) body+=`<div class="detail-note"><div class="detail-note-lbl">Notities</div><div style="font-size:13px">${s.notes}</div></div>`;
+
+  body+=`<div style="display:flex;gap:8px;margin-top:8px">
+    <button onclick="closeDetail()" style="flex:1;padding:10px;background:none;border:1px solid var(--border);border-radius:var(--radius);color:var(--muted);font-size:14px;cursor:pointer">Sluiten</button>
+    <button onclick="deleteSession('${s.id}')" style="flex:1;padding:10px;background:var(--red-dim);border:1px solid var(--red);border-radius:var(--radius);color:var(--red-text);font-size:14px;cursor:pointer;font-weight:600">Verwijderen</button>
+  </div>`;
+
+  document.getElementById('detailSheet').innerHTML=body;
+  document.getElementById('detailOverlay').classList.add('open');
+}
+function closeDetail(){document.getElementById('detailOverlay').classList.remove('open')}
+function deleteSession(id){
+  if(!confirm('Sessie verwijderen?')) return;
+  sessions=sessions.filter(s=>s.id!==id);
+  save(); closeDetail(); renderCal();
+}
+document.getElementById('detailOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeDetail()});
+
+// ---- PROGRESS PAGE ----
+function renderProgress(){
+  const total=sessions.length;
+  const kracht=sessions.filter(s=>s.type==='kracht').length;
+  const cardio=sessions.filter(s=>s.type==='cardio-out'||s.type==='cardio-in').length;
+  const res=sessions.filter(s=>s.type==='reservist').length;
+  const totKm=sessions.filter(s=>s.afstand).reduce((a,s)=>a+parseFloat(s.afstand||0),0);
+
+  document.getElementById('statGrid').innerHTML=`
+    <div class="stat-card"><div class="stat-val" style="color:var(--green)">${total}</div><div class="stat-lbl">Totaal sessies</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--purple)">${kracht}</div><div class="stat-lbl">Krachtsessies</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--amber)">${cardio}</div><div class="stat-lbl">Cardiosessies</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--red)">${res}</div><div class="stat-lbl">Reservist sessies</div></div>
+    <div class="stat-card" style="grid-column:1/-1"><div class="stat-val" style="color:var(--green-text)">${totKm.toFixed(1)} km</div><div class="stat-lbl">Totaal gelopen / afgelegd</div></div>`;
+
+  // Bar chart 8 weeks
+  const bars=[];
+  for(let w=7;w>=0;w--){
+    const start=new Date(); start.setDate(start.getDate()-w*7-start.getDay()+1);
+    const end=new Date(start); end.setDate(start.getDate()+6);
+    const ws=start.toISOString().slice(0,10);
+    const we=end.toISOString().slice(0,10);
+    const wk=sessions.filter(s=>s.date>=ws&&s.date<=we&&s.type==='kracht').length;
+    const wco=sessions.filter(s=>s.date>=ws&&s.date<=we&&s.type==='cardio-out').length;
+    const wci=sessions.filter(s=>s.date>=ws&&s.date<=we&&s.type==='cardio-in').length;
+    const wr=sessions.filter(s=>s.date>=ws&&s.date<=we&&s.type==='reservist').length;
+    bars.push({wk,wco,wci,wr,lbl:'W'+(8-w)});
+  }
+  const maxVal=Math.max(...bars.map(b=>b.wk+b.wco+b.wci+b.wr),1);
+  const barHtml=bars.map(b=>{
+    const tot=b.wk+b.wco+b.wci+b.wr;
+    const pct=Math.round(tot/maxVal*80);
+    return `<div class="bar-container" style="flex:1">
+      <div class="bar-chart" style="height:80px">
+        <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:1px">
+          ${b.wk?`<div style="height:${Math.round(b.wk/maxVal*78)}px;background:var(--purple);border-radius:3px 3px 0 0"></div>`:''}
+          ${b.wco?`<div style="height:${Math.round(b.wco/maxVal*78)}px;background:var(--green);border-radius:3px 3px 0 0"></div>`:''}
+          ${b.wci?`<div style="height:${Math.round(b.wci/maxVal*78)}px;background:var(--amber);border-radius:3px 3px 0 0"></div>`:''}
+          ${b.wr?`<div style="height:${Math.round(b.wr/maxVal*78)}px;background:var(--red);border-radius:3px 3px 0 0"></div>`:''}
+          ${!tot?`<div style="height:4px;background:var(--surface3);border-radius:3px"></div>`:''}
+        </div>
+      </div>
+      <div class="bar-lbl">${b.lbl}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('barChartWrap').innerHTML=`<div style="display:flex;gap:3px;align-items:flex-end">${barHtml}</div>`;
+
+  // PR list — per oefening: PR gewicht + reps daarbij + historiek
+  const prs={};
+  sessions.filter(s=>s.type==='kracht').sort((a,b)=>a.date.localeCompare(b.date)).forEach(s=>{
+    (s.oefeningen||[]).forEach(o=>{
+      if(!o.naam) return;
+      if(!prs[o.naam]) prs[o.naam]={pr:{kg:0,reps:'-',date:''},history:[]};
+      // beste set van deze sessie
+      let bestKg=0, bestReps='-';
+      (o.sets||[]).forEach(st=>{
+        const kg=parseFloat(st.kg)||0;
+        if(kg>bestKg){bestKg=kg;bestReps=st.reps;}
+      });
+      if(bestKg>0){
+        // push naar history (max 8 entries bewaren)
+        prs[o.naam].history.push({kg:bestKg,reps:bestReps,date:s.date});
+        if(prs[o.naam].history.length>8) prs[o.naam].history.shift();
+        if(bestKg>prs[o.naam].pr.kg) prs[o.naam].pr={kg:bestKg,reps:bestReps,date:s.date};
+      }
+    });
+  });
+  const prList=document.getElementById('exerciseList');
+  const prEntries=Object.entries(prs).filter(([,v])=>v.pr.kg>0).sort((a,b)=>b[1].pr.kg-a[1].pr.kg);
+  if(!prEntries.length){
+    prList.innerHTML='<div style="font-size:13px;color:var(--muted);padding:0 4px 8px">Vul je eerste krachtsessie in — dan verschijnen hier automatisch je PR\'s.</div>';
+    return;
+  }
+  prList.innerHTML=prEntries.map(([naam,data])=>{
+    const h=data.history;
+    const maxH=Math.max(...h.map(e=>e.kg),1);
+    // mini sparkline bars
+    const sparkBars=h.map((e,i)=>{
+      const isPR=e.kg===data.pr.kg;
+      const ht=Math.max(Math.round(e.kg/maxH*28),4);
+      return `<div title="${e.kg}kg x ${e.reps}" style="width:${Math.floor(100/Math.max(h.length,1))-2}%;height:${ht}px;background:${isPR?'var(--purple)':'var(--surface3)'};border-radius:2px 2px 0 0;flex-shrink:0"></div>`;
+    }).join('');
+    return `<div class="ex-card" style="cursor:default">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+        <div style="flex:1;min-width:0">
+          <div class="ex-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${naam}</div>
+          <div class="ex-sub">PR gehaald op ${data.pr.date}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:700;color:var(--purple-text);line-height:1">${data.pr.kg} kg</div>
+          <div style="font-size:11px;color:var(--muted)">${data.pr.reps} reps</div>
+        </div>
+      </div>
+      ${h.length>1?`<div style="margin-top:10px">
+        <div style="font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.3px;text-transform:uppercase;margin-bottom:4px">Progressie (${h.length} sessies)</div>
+        <div style="display:flex;align-items:flex-end;gap:2px;height:32px">${sparkBars}</div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:2px">
+          <span>${h[0].date}</span><span>${h[h.length-1].date}</span>
+        </div>
+      </div>`:'<div style="font-size:11px;color:var(--muted);margin-top:6px">Doe nog een sessie om progressie te zien.</div>'}
+    </div>`;
+  }).join('');
+}
+
+// ---- RESERVIST PAGE ----
+function renderRes(){
+  const resSessions=sessions.filter(s=>s.type==='reservist').sort((a,b)=>b.date.localeCompare(a.date));
+  // ook cardio-out sessies tellen mee voor hardloopafstand
+  const cardioBuiten=sessions.filter(s=>s.type==='cardio-out');
+  const totMin=resSessions.reduce((a,s)=>a+parseFloat(s.duur||0),0);
+  const totKm=resSessions.reduce((a,s)=>a+parseFloat(s.afstand||0),0);
+
+  document.getElementById('resStats').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:0 12px 8px">
+      <div class="stat-card"><div class="stat-val" style="color:var(--red)">${resSessions.length}</div><div class="stat-lbl">Sessies</div></div>
+      <div class="stat-card"><div class="stat-val" style="color:var(--amber)">${Math.round(totMin/60*10)/10}</div><div class="stat-lbl">Uren totaal</div></div>
+      <div class="stat-card"><div class="stat-val" style="color:var(--green)">${totKm.toFixed(1)}</div><div class="stat-lbl">km afgelegd</div></div>
+    </div>`;
+
+  // FIT-CLAS Cluster 1 eisen
+  // Beste hardloopprestatie uit cardio-buiten sessies (12 min Cooper = afstand)
+  // We gebruiken de langste afstand ooit gelopen als indicator
+  const bestRun = Math.max(0, ...cardioBuiten.map(s=>parseFloat(s.afstand||0)));
+  const bestRunTijd = Math.min(999, ...cardioBuiten.filter(s=>s.afstand).map(s=>parseFloat(s.tijd||999)));
+
+  // Cluster 1 eisen definitie
+  const eisen = [
+    {
+      naam:'🏃 Cooper test (hardlopen)',
+      eis:'2200 m in 12 minuten',
+      doel:2200,
+      eenheid:'m',
+      jouwBeste: bestRun>0 ? Math.round(bestRun*1000)+' m (beste run)' : null,
+      jouwWaarde: bestRun>0 ? Math.round(bestRun*1000) : null,
+      uitleg:'Hardlopen zonder rugzak, zo ver mogelijk in 12 min. Min. 2200m vereist.'
+    },
+    {
+      naam:'🎒 Marstest (met rugzak)',
+      eis:'2000 m in 20 minuten — 25 kg rugzak',
+      doel:null,
+      eenheid:null,
+      jouwBeste: null,
+      jouwWaarde: null,
+      uitleg:'Stevige wandelpas van 6 km/u met 25 kg. Wordt in groep afgelegd.'
+    },
+    {
+      naam:'📦 Til & draagtest',
+      eis:'Munitiekist 20 kg — 10× van A naar B (~25m)',
+      doel:null,
+      eenheid:null,
+      jouwBeste: null,
+      jouwWaarde: null,
+      uitleg:'Kist van borsthoogte optillen, 25m dragen, neerzetten. 10 herhalingen.'
+    },
+    {
+      naam:'⛏️ Graaftest',
+      eis:'60 seconden — medicine bal 5 kg',
+      doel:null,
+      eenheid:null,
+      jouwBeste: null,
+      jouwWaarde: null,
+      uitleg:'Graafbeweging: grond aantikken → borsthoogte muur aantikken. 60 sec vol.'
+    },
+    {
+      naam:'🏟️ Vaardigheidsparcours',
+      eis:'Binnen parcours — schiethoudingen',
+      doel:null,
+      eenheid:null,
+      jouwBeste: null,
+      jouwWaarde: null,
+      uitleg:'Tijgeren, kruipen, zitten, hurken, knielen + 3 schiethoudingen + bout/moer.'
+    }
+  ];
+
+  const eisenHtml = eisen.map(e=>{
+    let progressBar='';
+    let statusBadge='';
+    if(e.doel && e.jouwWaarde!==null){
+      const pct=Math.min(100,Math.round(e.jouwWaarde/e.doel*100));
+      const kleur = pct>=100 ? 'var(--green)' : pct>=75 ? 'var(--amber)' : 'var(--red)';
+      const statusTekst = pct>=100 ? '✓ Gehaald!' : pct+'% van doel';
+      statusBadge=`<div style="font-size:11px;font-weight:700;color:${kleur};margin-top:4px">${statusTekst}</div>`;
+      progressBar=`<div style="margin-top:6px;background:var(--surface3);border-radius:4px;height:6px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:${kleur};border-radius:4px;transition:width .4s"></div>
+      </div>`;
+    }
+
+    const jouwRij = e.jouwWaarde!==null
+      ? `<div style="font-size:13px;font-weight:700;color:var(--text)">${e.jouwBeste}</div>`
+      : `<div style="font-size:11px;color:var(--muted);font-style:italic">Nog niet gemeten</div>`;
+
+    return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin:0 12px 8px;overflow:hidden">
+      <div style="padding:10px 14px 8px;border-bottom:1px solid var(--border)">
+        <div style="font-size:13px;font-weight:700">${e.naam}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">${e.uitleg}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;padding:10px 14px;gap:8px;align-items:start">
+        <div>
+          <div style="font-size:9px;color:var(--muted);text-transform:uppercase;font-weight:700;letter-spacing:.4px;margin-bottom:3px">Doel (cluster 1)</div>
+          <div style="font-size:12px;font-weight:600;color:var(--red-text)">${e.eis}</div>
+        </div>
+        <div>
+          <div style="font-size:9px;color:var(--muted);text-transform:uppercase;font-weight:700;letter-spacing:.4px;margin-bottom:3px">Jouw beste</div>
+          ${jouwRij}
+          ${statusBadge}
+        </div>
+      </div>
+      ${progressBar ? `<div style="padding:0 14px 10px">${progressBar}</div>` : ''}
+    </div>`;
+  }).join('');
+
+  document.getElementById('resSessions').innerHTML=`
+    <div style="padding:0 12px 4px">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;letter-spacing:.5px;color:var(--red-text);margin-bottom:2px">FIT-CLAS Cluster 1 eisen</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Landmacht reservisten — jouw voortgang links, het doel rechts</div>
+    </div>
+    ${eisenHtml}
+    ${resSessions.length?`
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;letter-spacing:.5px;padding:8px 12px 4px">Sessiehistorie</div>
+    `+resSessions.map(s=>`
+    <div class="res-card" onclick="showDetail(${JSON.stringify(s).replace(/"/g,'&quot;')})">
+      <div class="res-card-header">
+        <div style="font-size:16px">🪖</div>
+        <div>
+          <div class="res-card-title">${s.activiteit||'Reservist sessie'}</div>
+          <div style="font-size:11px;color:var(--muted)">${s.date}${s.locatie?' · '+s.locatie:''}</div>
+        </div>
+      </div>
+      <div class="res-body">
+        <div style="display:flex;gap:16px;font-size:13px">
+          ${s.duur?`<span>⏱ ${s.duur} min</span>`:''}
+          ${s.afstand?`<span>📍 ${s.afstand} km</span>`:''}
+        </div>
+        ${s.notes?`<div style="font-size:12px;color:var(--muted);margin-top:6px">${s.notes}</div>`:''}
+      </div>
+    </div>`).join(''):''}`;
+}
+
+// ---- LICHAAM ----
+let lichaamData = JSON.parse(localStorage.getItem('lichaam') || '[]');
+let selKwalVal = 0;
+function saveLichaamStore(){localStorage.setItem('lichaam', JSON.stringify(lichaamData))}
+
+document.getElementById('addLichaamBtn').onclick = ()=>{
+  document.getElementById('lDatum').value = todayStr();
+  selKwalVal=0;
+  document.querySelectorAll('.kwal-btn').forEach(b=>b.classList.remove('sel'));
+  document.getElementById('lGewicht').value='';
+  document.getElementById('lSlaap').value='';
+  document.getElementById('lNotes').value='';
+  document.getElementById('lichaamOverlay').classList.add('open');
+};
+function closeLichaam(){document.getElementById('lichaamOverlay').classList.remove('open')}
+document.getElementById('lichaamOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeLichaam()});
+
+function selKwal(v,el){
+  selKwalVal=v;
+  document.querySelectorAll('.kwal-btn').forEach(b=>b.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+function saveLichaam(){
+  const datum=document.getElementById('lDatum').value||todayStr();
+  const gewicht=document.getElementById('lGewicht').value;
+  const slaap=document.getElementById('lSlaap').value;
+  const notes=document.getElementById('lNotes').value;
+  if(!gewicht&&!slaap){alert('Vul minimaal gewicht of slaap in.');return;}
+  // overschrijf als datum al bestaat
+  lichaamData=lichaamData.filter(e=>e.datum!==datum);
+  lichaamData.push({datum,gewicht:gewicht?parseFloat(gewicht):null,slaap:slaap?parseFloat(slaap):null,kwal:selKwalVal||null,notes});
+  lichaamData.sort((a,b)=>a.datum.localeCompare(b.datum));
+  saveLichaamStore();
+  closeLichaam();
+  renderLichaam();
+}
+
+function renderLichaam(){
+  const data=lichaamData;
+  // Stats
+  const gewichten=data.filter(e=>e.gewicht!==null).map(e=>e.gewicht);
+  const slaapvals=data.filter(e=>e.slaap!==null).map(e=>e.slaap);
+  const huidig=gewichten.length?gewichten[gewichten.length-1]:null;
+  const laagste=gewichten.length?Math.min(...gewichten):null;
+  const hoogste=gewichten.length?Math.max(...gewichten):null;
+  const gemSlaap=slaapvals.length?Math.round(slaapvals.reduce((a,b)=>a+b,0)/slaapvals.length*10)/10:null;
+
+  document.getElementById('lichaamStats').innerHTML=`
+    <div class="stat-card"><div class="stat-val" style="color:var(--blue-text)">${huidig!==null?huidig+' kg':'–'}</div><div class="stat-lbl">Huidig gewicht</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--green)">${laagste!==null?laagste+' kg':'–'}</div><div class="stat-lbl">Laagste</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--amber)">${gemSlaap!==null?gemSlaap+' u':'–'}</div><div class="stat-lbl">Gem. slaap</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--muted)">${data.length}</div><div class="stat-lbl">Metingen</div></div>`;
+
+  // Gewicht chart (30 dagen)
+  const gCanvas=document.getElementById('gewichtChart');
+  const gCtx=gCanvas.getContext('2d');
+  const today=new Date();
+  const days30=[];
+  for(let i=29;i>=0;i--){const d=new Date(today);d.setDate(d.getDate()-i);days30.push(d.toISOString().slice(0,10));}
+  const gVals=days30.map(d=>{const e=data.find(x=>x.datum===d);return e&&e.gewicht!==null?e.gewicht:null;});
+  drawLineChart(gCtx,gCanvas,days30,gVals,'var(--blue)','#79c0ff','kg');
+
+  // Slaap chart (14 dagen)
+  const sCanvas=document.getElementById('slaapChart');
+  const sCtx=sCanvas.getContext('2d');
+  const days14=[];
+  for(let i=13;i>=0;i--){const d=new Date(today);d.setDate(d.getDate()-i);days14.push(d.toISOString().slice(0,10));}
+  const sVals=days14.map(d=>{const e=data.find(x=>x.datum===d);return e&&e.slaap!==null?e.slaap:null;});
+  drawBarChartSlaap(sCtx,sCanvas,days14,sVals);
+
+  // Log
+  const logEl=document.getElementById('lichaamLog');
+  const recent=[...data].reverse().slice(0,20);
+  if(!recent.length){logEl.innerHTML='<div style="font-size:13px;color:var(--muted);padding:0 16px 8px">Nog niets gelogd.</div>';return;}
+  const kwalEmoji=['','😴','😕','😐','😊','😁'];
+  logEl.innerHTML=recent.map(e=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;margin:0 12px 6px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);cursor:pointer"
+      onclick="deleteLichaam('${e.datum}')">
+      <div style="flex:1">
+        <div style="font-size:12px;font-weight:600;color:var(--muted)">${e.datum}</div>
+        <div style="display:flex;gap:14px;margin-top:3px;flex-wrap:wrap">
+          ${e.gewicht!==null?`<span style="font-size:14px;font-weight:700;color:var(--blue-text)">⚖️ ${e.gewicht} kg</span>`:''}
+          ${e.slaap!==null?`<span style="font-size:14px;font-weight:700;color:var(--amber-text)">🌙 ${e.slaap}u ${e.kwal?kwalEmoji[e.kwal]:''}</span>`:''}
+        </div>
+        ${e.notes?`<div style="font-size:11px;color:var(--muted);margin-top:3px">${e.notes}</div>`:''}
+      </div>
+      <div style="font-size:18px;color:var(--surface3)">✕</div>
+    </div>`).join('');
+}
+
+function deleteLichaam(datum){
+  if(!confirm('Meting van '+datum+' verwijderen?')) return;
+  lichaamData=lichaamData.filter(e=>e.datum!==datum);
+  saveLichaamStore(); renderLichaam();
+}
+
+function drawLineChart(ctx,canvas,labels,values,strokeColor,dotColor,unit){
+  const W=canvas.offsetWidth||320;
+  const H=90;
+  canvas.width=W; canvas.height=H;
+  const filled=values.filter(v=>v!==null);
+  if(!filled.length){
+    ctx.fillStyle='#8b949e';ctx.font='12px Barlow,sans-serif';ctx.textAlign='center';
+    ctx.fillText('Nog geen data',W/2,H/2); return;
+  }
+  const min=Math.min(...filled)-1;
+  const max=Math.max(...filled)+1;
+  const pad=28;
+  const pw=W-pad*2; const ph=H-20;
+  // grid lines
+  ctx.strokeStyle='#30363d';ctx.lineWidth=0.5;
+  for(let i=0;i<=3;i++){const y=10+ph/3*i;ctx.beginPath();ctx.moveTo(pad,y);ctx.lineTo(W-pad,y);ctx.stroke();}
+  // line
+  ctx.beginPath();ctx.strokeStyle=strokeColor;ctx.lineWidth=2;
+  let first=true;
+  values.forEach((v,i)=>{
+    if(v===null) return;
+    const x=pad+i/(labels.length-1||1)*pw;
+    const y=10+ph-(v-min)/(max-min||1)*ph;
+    if(first){ctx.moveTo(x,y);first=false;}else ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+  // dots + labels
+  values.forEach((v,i)=>{
+    if(v===null) return;
+    const x=pad+i/(labels.length-1||1)*pw;
+    const y=10+ph-(v-min)/(max-min||1)*ph;
+    ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);
+    ctx.fillStyle=dotColor;ctx.fill();
+  });
+  // x labels (first, mid, last)
+  ctx.fillStyle='#8b949e';ctx.font='9px Barlow,sans-serif';ctx.textAlign='center';
+  [0,Math.floor(labels.length/2),labels.length-1].forEach(i=>{
+    const x=pad+i/(labels.length-1||1)*pw;
+    ctx.fillText(labels[i].slice(5),x,H-2);
+  });
+  // y label
+  ctx.textAlign='right';
+  ctx.fillText(Math.round(max)+unit,pad-3,14);
+  ctx.fillText(Math.round(min)+unit,pad-3,10+ph);
+}
+
+function drawBarChartSlaap(ctx,canvas,labels,values){
+  const W=canvas.offsetWidth||320;
+  const H=90;
+  canvas.width=W; canvas.height=H;
+  const filled=values.filter(v=>v!==null);
+  if(!filled.length){
+    ctx.fillStyle='#8b949e';ctx.font='12px Barlow,sans-serif';ctx.textAlign='center';
+    ctx.fillText('Nog geen data',W/2,H/2); return;
+  }
+  const max=Math.max(...filled,9);
+  const pad=24; const pw=W-pad*2; const ph=H-20;
+  const bw=Math.max(4,pw/labels.length-3);
+  labels.forEach((lbl,i)=>{
+    const v=values[i];
+    const x=pad+i*(pw/labels.length)+(pw/labels.length-bw)/2;
+    if(v===null){
+      ctx.fillStyle='#21262d';ctx.fillRect(x,10+ph-4,bw,4);
+      return;
+    }
+    const barH=Math.max(4,(v/max)*ph);
+    const kleur=v>=7?'#3fb950':v>=6?'#d29922':'#f85149';
+    ctx.fillStyle=kleur;ctx.beginPath();
+    ctx.roundRect?ctx.roundRect(x,10+ph-barH,bw,barH,2):ctx.rect(x,10+ph-barH,bw,barH);
+    ctx.fill();
+  });
+  ctx.fillStyle='#8b949e';ctx.font='9px Barlow,sans-serif';ctx.textAlign='center';
+  [0,Math.floor(labels.length/2),labels.length-1].forEach(i=>{
+    const x=pad+i*(pw/labels.length)+(pw/labels.length)/2;
+    ctx.fillText(labels[i].slice(5),x,H-2);
+  });
+  ctx.textAlign='right';
+  ctx.fillText('9u',pad-3,14);
+  ctx.fillText('0u',pad-3,10+ph);
+}
+
+// ---- BACKUP ----
+function exportData(){
+  const backup={
+    versie:1,
+    datum: new Date().toISOString(),
+    sessions,
+    lichaam: lichaamData
+  };
+  const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const datumStr=todayStr();
+  a.href=url;
+  a.download='kesseltraining-backup-'+datumStr+'.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importData(e){
+  const file=e.target.files[0];
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const backup=JSON.parse(ev.target.result);
+      if(!backup.versie||!backup.sessions) throw new Error('Ongeldig bestand');
+      if(!confirm(`Back-up van ${backup.datum.slice(0,10)} importeren?\n\nDit voegt ${backup.sessions.length} sessies samen met je huidige data.`)) return;
+      // Merge: voeg toe, geen duplicaten op basis van id
+      const bestaandeIds=new Set(sessions.map(s=>s.id));
+      const nieuw=backup.sessions.filter(s=>!bestaandeIds.has(s.id));
+      sessions=[...sessions,...nieuw];
+      save();
+      if(backup.lichaam){
+        const bestaandeDatums=new Set(lichaamData.map(e=>e.datum));
+        const nieuwLichaam=backup.lichaam.filter(e=>!bestaandeDatums.has(e.datum));
+        lichaamData=[...lichaamData,...nieuwLichaam].sort((a,b)=>a.datum.localeCompare(b.datum));
+        saveLichaamStore();
+      }
+      const msg=document.getElementById('backupMsg');
+      msg.textContent='✓ '+nieuw.length+' nieuwe sessies geïmporteerd!';
+      msg.style.display='block';
+      setTimeout(()=>msg.style.display='none',4000);
+      renderCal();
+    }catch(err){
+      alert('Fout bij importeren: '+err.message);
+    }
+  };
+  reader.readAsText(file);
+  e.target.value='';
+}
+
+// ---- INIT ----
+renderCal();
+
+// Service Worker
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
+</script>
+</body>
+</html>
