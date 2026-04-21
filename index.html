@@ -417,7 +417,7 @@ input,textarea,select,button{font-family:'Barlow',sans-serif}
 <div class="overlay" id="bibOverlay">
   <div class="sheet">
     <div class="sheet-handle"></div>
-    <div class="sheet-title">Oefening toevoegen</div>
+    <div class="sheet-title" id="bibModalTitle">Oefening toevoegen</div>
     <div class="field-label">Naam</div><input class="field-input" id="bibNaam" placeholder="bijv. Bench Press">
     <div class="field-label">Spiergroep</div>
     <select class="field-input" id="bibSpier">
@@ -595,14 +595,38 @@ function renderLogFields(edit){
     <button class="add-oef-btn" onclick="addOefRow()">+ Oefening toevoegen</button>
     <div class="field-label">Notities</div><textarea class="field-input" id="fNotes" rows="2" placeholder="Hoe voelde de sessie?">${v(0,edit,'notes')}</textarea>`;
   } else if(currentType==='reservist'){
-    html+=`<div class="field-label">Activiteit</div><input class="field-input" id="fActiviteit" placeholder="bijv. Conditietraining..." value="${v(0,edit,'activiteit')}">
+    html+=`<div class="field-label">Activiteit / test</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:2px">
+      <button type="button" class="res-act-btn" data-act="cooper" onclick="selResAct('cooper',this)">🏃 Cooper test</button>
+      <button type="button" class="res-act-btn" data-act="mars" onclick="selResAct('mars',this)">🎒 Marstest</button>
+      <button type="button" class="res-act-btn" data-act="til" onclick="selResAct('til',this)">📦 Til & draagtest</button>
+      <button type="button" class="res-act-btn" data-act="graaf" onclick="selResAct('graaf',this)">⛏️ Graaftest</button>
+      <button type="button" class="res-act-btn" data-act="parcours" onclick="selResAct('parcours',this)">🏟️ Vaardigheidsparcours</button>
+      <button type="button" class="res-act-btn" data-act="overig" onclick="selResAct('overig',this)">📋 Overige training</button>
+    </div>
+    <input class="field-input" id="fActiviteit" placeholder="Of typ eigen activiteit..." value="${v(0,edit,'activiteit')}" style="margin-bottom:4px">
+    <div id="resActInfo" style="font-size:10px;color:var(--blue-text);background:var(--blue-dim);border-radius:6px;padding:5px 8px;margin-bottom:4px;display:none"></div>
     <div class="cardio-fields">
       <div><div class="field-label">Duur (min)</div><input class="field-input" id="fDuur" type="number" placeholder="90" value="${v(0,edit,'duur')}"></div>
       <div><div class="field-label">Locatie</div><input class="field-input" id="fLoc" placeholder="Kazerne..." value="${v(0,edit,'locatie')}"></div>
     </div>
-    <div class="cardio-fields">
-      <div><div class="field-label">Afstand (km)</div><input class="field-input" id="fAfstand" type="number" step="0.1" placeholder="optioneel" value="${v(0,edit,'afstand')}"></div>
-      <div><div class="field-label">Gem. hartslag</div><input class="field-input" id="fHr" type="number" placeholder="optioneel" value="${v(0,edit,'hr')}"></div>
+    <div id="resCooperVelden" style="display:none">
+      <div class="cardio-fields">
+        <div><div class="field-label">Afstand in 12 min (m)</div><input class="field-input" id="fCooperM" type="number" placeholder="2200" value="${v(0,edit,'cooperM')}"></div>
+        <div><div class="field-label">Gem. hartslag</div><input class="field-input" id="fHr" type="number" placeholder="optioneel" value="${v(0,edit,'hr')}"></div>
+      </div>
+    </div>
+    <div id="resMarsVelden" style="display:none">
+      <div class="cardio-fields">
+        <div><div class="field-label">Afstand (m)</div><input class="field-input" id="fMarsM" type="number" placeholder="2000" value="${v(0,edit,'marsM')}"></div>
+        <div><div class="field-label">Tijd (min)</div><input class="field-input" id="fMarsTijd" type="number" placeholder="20" value="${v(0,edit,'marsTijd')}"></div>
+      </div>
+    </div>
+    <div id="resOverigVelden">
+      <div class="cardio-fields">
+        <div><div class="field-label">Afstand (km)</div><input class="field-input" id="fAfstand" type="number" step="0.1" placeholder="optioneel" value="${v(0,edit,'afstand')}"></div>
+        <div><div class="field-label">Gem. hartslag</div><input class="field-input" id="fHr" type="number" placeholder="optioneel" value="${v(0,edit,'hr')}"></div>
+      </div>
     </div>
     <div class="field-label">Notities</div><textarea class="field-input" id="fNotes" rows="2" placeholder="Bevindingen...">${v(0,edit,'notes')}</textarea>`;
   }
@@ -623,6 +647,33 @@ function calcTempo(){
   const tf=document.getElementById('fTempo');
   if(!tf||tf.value)return;
   if(a>0&&t>0){const min=Math.floor(t/a);const sec=Math.round((t/a-min)*60);tf.value=min+':'+(sec<10?'0':'')+sec;}
+}
+
+const RES_ACTEN={
+  cooper:{label:'🏃 Cooper test',info:'Loop zo ver mogelijk in exact 12 minuten. Doel: ≥2200m.',velden:'cooper'},
+  mars:{label:'🎒 Marstest',info:'2000m marcheren in ≤20 min met 25kg rugzak (tempo 6 km/u).',velden:'mars'},
+  til:{label:'📦 Til & draagtest',info:'Munitiekist (20kg) 10× van borsthoogte, 25m dragen en terug.',velden:'overig'},
+  graaf:{label:'⛏️ Graaftest',info:'Medicine bal (5kg): graafbeweging grond → borsthoogte, 60 sec volhouden.',velden:'overig'},
+  parcours:{label:'🏟️ Vaardigheidsparcours',info:'Indoor: tijgeren, kruipen, hurken, schiethoudingen.',velden:'overig'},
+  overig:{label:'📋 Overige training',info:'',velden:'overig'},
+};
+
+function selResAct(type, el){
+  document.querySelectorAll('.res-act-btn').forEach(b=>b.classList.remove('res-act-sel'));
+  el.classList.add('res-act-sel');
+  const act=RES_ACTEN[type];
+  document.getElementById('fActiviteit').value=act.label;
+  const info=document.getElementById('resActInfo');
+  if(act.info){info.textContent=act.info;info.style.display='block';}
+  else info.style.display='none';
+  // Toon juiste velden
+  document.getElementById('resCooperVelden').style.display=act.velden==='cooper'?'block':'none';
+  document.getElementById('resMarsVelden').style.display=act.velden==='mars'?'block':'none';
+  document.getElementById('resOverigVelden').style.display=act.velden==='overig'?'block':'none';
+  // hr staat in cooper velden bij cooper, anders in overig
+  if(act.velden==='cooper'||act.velden==='mars'){
+    document.getElementById('resOverigVelden').style.display='none';
+  }
 }
 
 // OEF ROWS
@@ -739,6 +790,9 @@ function saveSession(){
     session.duur=document.getElementById('fDuur')?.value||'';
     session.locatie=document.getElementById('fLoc')?.value||'';
     session.afstand=document.getElementById('fAfstand')?.value||'';
+    session.cooperM=document.getElementById('fCooperM')?.value||'';
+    session.marsM=document.getElementById('fMarsM')?.value||'';
+    session.marsTijd=document.getElementById('fMarsTijd')?.value||'';
   }
 
   if(editId)sessions=sessions.filter(s=>s.id!==editId);
@@ -924,10 +978,35 @@ function renderRes(){
     <div class="stat-card"><div class="stat-val" style="color:var(--green)">${totKm.toFixed(1)}</div><div class="stat-lbl">km</div></div>
   </div>`;
 
-  const bestRun=Math.max(0,...cb.map(s=>parseFloat(s.afstand||0)));
+  // Cooper: zoek reservist sessies met cooperM ingevuld, of cardio-out sessies met tijd ≤ 12 min
+  const cooperSessies=sessions.filter(s=>{
+    if(s.type==='reservist'&&s.cooperM) return true;
+    // cardio-out: tijd moet ≤ 12 min zijn (anders telt het niet als cooper test)
+    if(s.type==='cardio-out'&&s.afstand&&s.tijd&&parseFloat(s.tijd)<=12) return true;
+    return false;
+  });
+  const bestCooperM=Math.max(0,...cooperSessies.map(s=>{
+    if(s.cooperM) return parseFloat(s.cooperM);
+    return Math.round(parseFloat(s.afstand||0)*1000);
+  }));
+
+  // Mars: zoek reservist sessies met marsM ingevuld
+  const marsSessies=sessions.filter(s=>s.type==='reservist'&&s.marsM&&s.marsTijd);
+  const bestMars=marsSessies.length?marsSessies.reduce((best,s)=>{
+    const m=parseFloat(s.marsM),t=parseFloat(s.marsTijd);
+    if(!best||m>best.m||(m===best.m&&t<best.t)) return {m,t};
+    return best;
+  },null):null;
+
   const eisen=[
-    {naam:'🏃 Cooper test',eis:'2200 m in 12 min',doel:2200,jv:bestRun>0?Math.round(bestRun*1000):null,jt:bestRun>0?Math.round(bestRun*1000)+' m':null,info:'Hardlopen zonder rugzak, min. 2200m in 12 min.'},
-    {naam:'🎒 Marstest',eis:'2000 m in 20 min — 25 kg',doel:null,jv:null,jt:null,info:'Stevige wandelpas 6 km/u met 25kg rugzak.'},
+    {naam:'🏃 Cooper test',eis:'2200 m in 12 min',doel:2200,
+     jv:bestCooperM>0?bestCooperM:null,
+     jt:bestCooperM>0?bestCooperM+' m':null,
+     info:'Hardlopen zonder rugzak, exact 12 min. Alleen sessies met tijd ≤12 min tellen mee.'},
+    {naam:'🎒 Marstest',eis:'2000 m in 20 min — 25 kg',doel:2000,
+     jv:bestMars?bestMars.m:null,
+     jt:bestMars?bestMars.m+' m in '+bestMars.t+' min':null,
+     info:'Marcheren met 25kg rugzak, 6 km/u. Log via "Reservist sessie toevoegen".'},
     {naam:'📦 Til & draagtest',eis:'Munitiekist 20 kg — 10×',doel:null,jv:null,jt:null,info:'Kist van borsthoogte, 25m dragen, 10 herhalingen.'},
     {naam:'⛏️ Graaftest',eis:'60 sec — medicine bal 5 kg',doel:null,jv:null,jt:null,info:'Graafbeweging: grond → borsthoogte, 60 sec vol.'},
     {naam:'🏟️ Vaardigheidsparcours',eis:'Indoor — schiethoudingen',doel:null,jv:null,jt:null,info:'Tijgeren, kruipen, hurken + schiethoudingen.'}
@@ -1584,24 +1663,51 @@ function deleteVoeding(id){voedingData=voedingData.filter(p=>p.id!==id);saveVoed
 
 // BIBLIOTHEEK
 document.getElementById('bibSearch').addEventListener('input',renderBib);
+let bibEditId=null;
+
 function renderBib(){
   const q=document.getElementById('bibSearch').value.toLowerCase();
   const filtered=bibliotheek.filter(b=>(b.naam+b.spier).toLowerCase().includes(q));
   const list=document.getElementById('bibList');
   if(!filtered.length){list.innerHTML='<div style="padding:12px;font-size:12px;color:var(--muted)">Geen oefeningen. Voeg er een toe!</div>';return;}
   list.innerHTML=filtered.map(b=>`<div class="bib-item">
-    <div><div class="bib-name">${b.naam}</div><div class="bib-spier">${b.spier||'–'}</div></div>
+    <div style="flex:1;min-width:0;cursor:pointer" onclick="openBibEdit('${b.id}')">
+      <div class="bib-name">${b.naam}</div>
+      <div class="bib-spier">${b.spier||'–'}</div>
+    </div>
+    <button onclick="openBibEdit('${b.id}')" style="background:var(--blue-dim);border:1px solid var(--blue);border-radius:6px;color:var(--blue-text);font-size:11px;font-weight:600;cursor:pointer;padding:4px 8px;margin-right:4px">✏️</button>
     <button onclick="deleteBib('${b.id}')" style="background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:4px">✕</button>
   </div>`).join('');
 }
-function openBibAdd(){document.getElementById('bibNaam').value='';document.getElementById('bibSpier').value='';document.getElementById('bibOverlay').classList.add('open');}
-function closeBib(){document.getElementById('bibOverlay').classList.remove('open')}
+function openBibAdd(){
+  bibEditId=null;
+  document.getElementById('bibModalTitle').textContent='Oefening toevoegen';
+  document.getElementById('bibNaam').value='';
+  document.getElementById('bibSpier').value='';
+  document.getElementById('bibOverlay').classList.add('open');
+}
+function openBibEdit(id){
+  const b=bibliotheek.find(x=>x.id===id);if(!b)return;
+  bibEditId=id;
+  document.getElementById('bibModalTitle').textContent='Oefening bewerken';
+  document.getElementById('bibNaam').value=b.naam;
+  document.getElementById('bibSpier').value=b.spier||'';
+  document.getElementById('bibOverlay').classList.add('open');
+}
+function closeBib(){document.getElementById('bibOverlay').classList.remove('open');bibEditId=null;}
 document.getElementById('bibOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeBib()});
 function saveBib(){
   const naam=document.getElementById('bibNaam').value.trim();const spier=document.getElementById('bibSpier').value;
   if(!naam){alert('Vul een naam in.');return;}
-  if(bibliotheek.find(b=>b.naam.toLowerCase()===naam.toLowerCase())){alert('Staat al in bibliotheek.');return;}
-  bibliotheek.push({id:Date.now().toString(),naam,spier});saveBibStore();closeBib();renderBib();
+  const duplicate=bibliotheek.find(b=>b.naam.toLowerCase()===naam.toLowerCase()&&b.id!==bibEditId);
+  if(duplicate){alert('Deze naam staat al in de bibliotheek.');return;}
+  if(bibEditId){
+    const b=bibliotheek.find(x=>x.id===bibEditId);
+    if(b){b.naam=naam;b.spier=spier;}
+  } else {
+    bibliotheek.push({id:Date.now().toString(),naam,spier});
+  }
+  saveBibStore();closeBib();renderBib();
 }
 function deleteBib(id){if(!confirm('Verwijderen?'))return;bibliotheek=bibliotheek.filter(b=>b.id!==id);saveBibStore();renderBib();}
 
