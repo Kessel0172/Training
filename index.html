@@ -1495,7 +1495,7 @@ function useTemplate(id){
 
 // BACKUP
 function exportData(){
-  const blob=new Blob([JSON.stringify({versie:3,datum:new Date().toISOString(),sessions,lichaam:lichaamData,bibliotheek,voedingDoelen},null,2)],{type:'application/json'});
+  const blob=new Blob([JSON.stringify({versie:4,datum:new Date().toISOString(),sessions,lichaam:lichaamData,bibliotheek,templates,doelGewicht},null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='kesseltraining-backup-'+todayStr()+'.json';a.click();URL.revokeObjectURL(url);
 }
 function importData(e){
