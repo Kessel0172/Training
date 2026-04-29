@@ -593,31 +593,74 @@ function renderLogFields(edit){
       <button type="button" class="res-act-btn" data-act="mars" onclick="selResAct('mars',this)">🎒 Marstest</button>
       <button type="button" class="res-act-btn" data-act="til" onclick="selResAct('til',this)">📦 Til & draagtest</button>
       <button type="button" class="res-act-btn" data-act="graaf" onclick="selResAct('graaf',this)">⛏️ Graaftest</button>
-      <button type="button" class="res-act-btn" data-act="parcours" onclick="selResAct('parcours',this)">🏟️ Vaardigheidsparcours</button>
+      <button type="button" class="res-act-btn" data-act="parcours" onclick="selResAct('parcours',this)">🎯 Schiethoudingen</button>
+      <button type="button" class="res-act-btn" data-act="werken" onclick="selResAct('werken',this)">🔧 Werken boven hoogte</button>
       <button type="button" class="res-act-btn" data-act="overig" onclick="selResAct('overig',this)">📋 Overige training</button>
     </div>
     <input class="field-input" id="fActiviteit" placeholder="Of typ eigen activiteit..." value="${v(0,edit,'activiteit')}" style="margin-bottom:4px">
     <div id="resActInfo" style="font-size:10px;color:var(--blue-text);background:var(--blue-dim);border-radius:6px;padding:5px 8px;margin-bottom:4px;display:none"></div>
-    <div id="resDuurLocVelden" class="cardio-fields">
-      <div><div class="field-label">Duur (min)</div><input class="field-input" id="fDuur" type="number" placeholder="90" value="${v(0,edit,'duur')}"></div>
-      <div><div class="field-label">Locatie</div><input class="field-input" id="fLoc" placeholder="Kazerne..." value="${v(0,edit,'locatie')}"></div>
-    </div>
+    <!-- COOPER -->
     <div id="resCooperVelden" style="display:none">
       <div class="cardio-fields">
         <div><div class="field-label">Afstand in 12 min (m)</div><input class="field-input" id="fCooperM" type="number" placeholder="2200" value="${v(0,edit,'cooperM')}"></div>
         <div><div class="field-label">Gem. hartslag</div><input class="field-input" id="fHr" type="number" placeholder="optioneel" value="${v(0,edit,'hr')}"></div>
       </div>
     </div>
+    <!-- MARS -->
     <div id="resMarsVelden" style="display:none">
       <div class="cardio-fields">
-        <div><div class="field-label">Afstand (m)</div><input class="field-input" id="fMarsM" type="number" placeholder="2000" value="${v(0,edit,'marsM')}"></div>
-        <div><div class="field-label">Tijd (min)</div><input class="field-input" id="fMarsTijd" type="number" placeholder="20" value="${v(0,edit,'marsTijd')}"></div>
+        <div><div class="field-label">Tijd (min)</div><input class="field-input" id="fMarsTijd" type="number" step="0.1" placeholder="24" value="${v(0,edit,'marsTijd')}"></div>
+        <div><div class="field-label">Gewicht rugzak (kg)</div><input class="field-input" id="fMarsGewicht" type="number" placeholder="25" value="${v(0,edit,'marsGewicht')}"></div>
+      </div>
+      <div class="cardio-fields">
+        <div><div class="field-label">Afstand (km)</div><input class="field-input" id="fMarsM" type="number" step="0.1" placeholder="afstand" value="${v(0,edit,'marsM')}"></div>
+        <div><div class="field-label">Gem. hartslag</div><input class="field-input" id="fHr" type="number" placeholder="optioneel" value="${v(0,edit,'hr')}"></div>
       </div>
     </div>
-    <div id="resOverigVelden">
+    <!-- TIL & DRAAGTEST -->
+    <div id="resTilVelden" style="display:none">
       <div class="cardio-fields">
-        <div><div class="field-label">Afstand (km)</div><input class="field-input" id="fAfstand" type="number" step="0.1" placeholder="optioneel" value="${v(0,edit,'afstand')}"></div>
-        <div><div class="field-label">Gem. hartslag</div><input class="field-input" id="fHr" type="number" placeholder="optioneel" value="${v(0,edit,'hr')}"></div>
+        <div><div class="field-label">Aantal keer gedaan</div><input class="field-input" id="fTilAantal" type="number" placeholder="10" value="${v(0,edit,'tilAantal')}"></div>
+        <div><div class="field-label">Gewicht kist (kg)</div><input class="field-input" id="fTilGewicht" type="number" placeholder="20" value="${v(0,edit,'tilGewicht')}"></div>
+      </div>
+      <div class="cardio-fields">
+        <div><div class="field-label">Afstand (m)</div><input class="field-input" id="fTilAfstand" type="number" placeholder="25" value="${v(0,edit,'tilAfstand')}"></div>
+        <div><div class="field-label">Locatie</div><input class="field-input" id="fLoc" placeholder="Kazerne..." value="${v(0,edit,'locatie')}"></div>
+      </div>
+    </div>
+    <!-- GRAAFTEST -->
+    <div id="resGraafVelden" style="display:none">
+      <div class="cardio-fields">
+        <div><div class="field-label">Aantal herhalingen (60s)</div><input class="field-input" id="fGraafScore" type="number" placeholder="bijv. 28" value="${v(0,edit,'graafScore')}"></div>
+        <div><div class="field-label">Locatie</div><input class="field-input" id="fLoc" placeholder="Kazerne..." value="${v(0,edit,'locatie')}"></div>
+      </div>
+    </div>
+    <!-- SCHIETHOUDINGEN -->
+    <div id="resParcoursVelden" style="display:none">
+      <div class="cardio-fields">
+        <div><div class="field-label">Gehaald?</div>
+          <select class="field-input" id="fParcoursGehaald">
+            <option value="" ${v(0,edit,'parcoursGehaald')===''?'selected':''}>Selecteer...</option>
+            <option value="ja" ${v(0,edit,'parcoursGehaald')==='ja'?'selected':''}>✅ Ja, gehaald</option>
+            <option value="nee" ${v(0,edit,'parcoursGehaald')==='nee'?'selected':''}>❌ Niet gehaald</option>
+          </select>
+        </div>
+        <div><div class="field-label">Locatie</div><input class="field-input" id="fLoc" placeholder="Kazerne..." value="${v(0,edit,'locatie')}"></div>
+      </div>
+    </div>
+    <!-- WERKEN BOVEN HOOGTE -->
+    <div id="resWerkenVelden" style="display:none">
+      <div class="cardio-fields">
+        <div><div class="field-label">Steekgewicht (sec gehaald)</div><input class="field-input" id="fSteekSec" type="number" placeholder="60" value="${v(0,edit,'steekSec')}"></div>
+        <div><div class="field-label">Vleugelmoeren (sec gehaald)</div><input class="field-input" id="fVleugelSec" type="number" placeholder="60" value="${v(0,edit,'vleugelSec')}"></div>
+      </div>
+      <div><div class="field-label">Locatie</div><input class="field-input" id="fLoc" placeholder="Kazerne..." value="${v(0,edit,'locatie')}"></div>
+    </div>
+    <!-- OVERIG -->
+    <div id="resOverigVelden" style="display:none">
+      <div class="cardio-fields">
+        <div><div class="field-label">Duur (min)</div><input class="field-input" id="fDuur" type="number" placeholder="90" value="${v(0,edit,'duur')}"></div>
+        <div><div class="field-label">Locatie</div><input class="field-input" id="fLoc" placeholder="Kazerne..." value="${v(0,edit,'locatie')}"></div>
       </div>
     </div>
     <div class="field-label">Notities</div><textarea class="field-input" id="fNotes" rows="2" placeholder="Bevindingen...">${v(0,edit,'notes')}</textarea>`;
@@ -643,10 +686,11 @@ function calcTempo(){
 
 const RES_ACTEN={
   cooper:{label:'🏃 Cooper test',info:'Loop zo ver mogelijk in exact 12 minuten. Doel: ≥2200m.',velden:'cooper'},
-  mars:{label:'🎒 Marstest',info:'2000m marcheren in ≤20 min met 25kg rugzak (tempo 6 km/u).',velden:'mars'},
-  til:{label:'📦 Til & draagtest',info:'Munitiekist (20kg) 10× van borsthoogte, 25m dragen en terug.',velden:'overig'},
-  graaf:{label:'⛏️ Graaftest',info:'Medicine bal (5kg): graafbeweging grond → borsthoogte, 60 sec volhouden. Noteer je score (aantal herhalingen) in notities.',velden:'overig'},
-  parcours:{label:'🏟️ Vaardigheidsparcours',info:'Indoor: tijgeren, kruipen, hurken, schiethoudingen.',velden:'overig'},
+  mars:{label:'🎒 Marstest',info:'24 minuten lopen met rugzak van 25kg. Vul je tijd en gewicht in.',velden:'mars'},
+  til:{label:'📦 Til & draagtest',info:'Munitiekist (20kg) optillen, 25m dragen en neerzetten op tiltafel. Doel: 10×.',velden:'til'},
+  graaf:{label:'⛏️ Graaftest',info:'Bal (5kg) 60 sec draaibeweging grond → borsthoogte. Vul aantal herhalingen in.',velden:'graaf'},
+  parcours:{label:'🎯 Schiethoudingen',info:'5 houdingen: hurkzit + staand, knielend links, knielend rechts, liggend schieten.',velden:'parcours'},
+  werken:{label:'🔧 Werken boven hoogte',info:'60s steekgewicht boven schouderhoogte + 60s vleugelmoeren draaien.',velden:'werken'},
   overig:{label:'📋 Overige training',info:'',velden:'overig'},
 };
 
@@ -658,17 +702,14 @@ function selResAct(type, el){
   const info=document.getElementById('resActInfo');
   if(act.info){info.textContent=act.info;info.style.display='block';}
   else info.style.display='none';
-  // Reset velden van andere modus (voorkomt data-vervuiling)
-  if(act.velden!=='cooper') document.getElementById('fCooperM').value='';
-  if(act.velden!=='mars'){document.getElementById('fMarsM').value='';document.getElementById('fMarsTijd').value='';}
-  if(act.velden!=='overig') document.getElementById('fAfstand').value='';
+  // Verberg alle velden eerst
+  ['resCooperVelden','resMarsVelden','resTilVelden','resGraafVelden','resParcoursVelden','resWerkenVelden','resOverigVelden'].forEach(id=>{
+    const el2=document.getElementById(id);if(el2)el2.style.display='none';
+  });
   // Toon juiste velden
-  document.getElementById('resCooperVelden').style.display=act.velden==='cooper'?'block':'none';
-  document.getElementById('resMarsVelden').style.display=act.velden==='mars'?'block':'none';
-  document.getElementById('resOverigVelden').style.display=act.velden==='overig'?'block':'none';
-  // Duur + locatie: toon alleen bij overig/til/graaf/parcours, niet bij cooper/mars (die hebben eigen velden)
-  const dlVelden=document.getElementById('resDuurLocVelden');
-  if(dlVelden) dlVelden.style.display=(act.velden==='cooper'||act.velden==='mars')?'none':'grid';
+  const vMap={cooper:'resCooperVelden',mars:'resMarsVelden',til:'resTilVelden',graaf:'resGraafVelden',parcours:'resParcoursVelden',werken:'resWerkenVelden',overig:'resOverigVelden'};
+  const target=document.getElementById(vMap[act.velden]);
+  if(target)target.style.display='block';
 }
 
 // OEF ROWS
@@ -781,13 +822,27 @@ function saveSession(){
     session.tijd=document.getElementById('fTijd')?.value||'';
     session.tempo=document.getElementById('fTempo')?.value||'';
   } else if(currentType==='reservist'){
-    session.activiteit=document.getElementById('fActiviteit')?.value||'';
-    session.duur=document.getElementById('fDuur')?.value||'';
-    session.locatie=document.getElementById('fLoc')?.value||'';
-    session.afstand=document.getElementById('fAfstand')?.value||'';
-    session.cooperM=document.getElementById('fCooperM')?.value||'';
-    session.marsM=document.getElementById('fMarsM')?.value||'';
-    session.marsTijd=document.getElementById('fMarsTijd')?.value||'';
+    const gv=id=>document.getElementById(id)?.value||'';
+    session.activiteit=gv('fActiviteit');
+    session.locatie=gv('fLoc');
+    session.duur=gv('fDuur');
+    // Cooper
+    session.cooperM=gv('fCooperM');
+    // Mars
+    session.marsM=gv('fMarsM');
+    session.marsTijd=gv('fMarsTijd');
+    session.marsGewicht=gv('fMarsGewicht');
+    // Til & draag
+    session.tilAantal=gv('fTilAantal');
+    session.tilGewicht=gv('fTilGewicht');
+    session.tilAfstand=gv('fTilAfstand');
+    // Graaf
+    session.graafScore=gv('fGraafScore');
+    // Schiethoudingen
+    session.parcoursGehaald=gv('fParcoursGehaald');
+    // Werken boven hoogte
+    session.steekSec=gv('fSteekSec');
+    session.vleugelSec=gv('fVleugelSec');
   }
 
   if(editId)sessions=sessions.filter(s=>s.id!==editId);
@@ -807,9 +862,13 @@ function showDetail(s){
     <div style="font-size:17px;font-weight:700;margin:4px 0 10px">${s.name||labels[s.type]}</div>`;
 
   const stats=[];
-  if(s.cooperM)stats.push({l:'Cooper',v:s.cooperM+' m'});
-  if(s.marsM)stats.push({l:'Marsafstand',v:s.marsM+' m'});
-  if(s.marsTijd)stats.push({l:'Marstijd',v:s.marsTijd+' min'});
+  if(s.cooperM)stats.push({l:'Cooper',v:s.cooperM+' m (doel: 2200m)'});
+  if(s.marsM||s.marsTijd){stats.push({l:'Marstest',v:(s.marsTijd||'?')+'min · '+(s.marsM||'?')+'km · '+(s.marsGewicht||'25')+'kg rugzak'});}
+  if(s.tilAantal)stats.push({l:'Til & draag',v:s.tilAantal+'× · '+(s.tilGewicht||'20')+'kg · '+(s.tilAfstand||'25')+'m'});
+  if(s.graafScore)stats.push({l:'Graaftest',v:s.graafScore+' herhalingen in 60s'});
+  if(s.parcoursGehaald)stats.push({l:'Schiethoudingen',v:s.parcoursGehaald==='ja'?'✅ Gehaald':'❌ Niet gehaald'});
+  if(s.steekSec)stats.push({l:'Steekgewicht',v:s.steekSec+'s boven hoogte'});
+  if(s.vleugelSec)stats.push({l:'Vleugelmoeren',v:s.vleugelSec+'s'});
   if(s.duur)stats.push({l:'Duur',v:s.duur+' min'});
   if(s.hr)stats.push({l:'Hartslag',v:s.hr+' bpm'});
   if(s.afstand)stats.push({l:'Afstand',v:s.afstand+' km'});
