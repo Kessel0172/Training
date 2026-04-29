@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Data Redden</title>
+<style>
+body{font-family:sans-serif;background:#0d1117;color:#e6edf3;padding:20px;margin:0}
+h2{color:#3fb950}
+button{background:#3fb950;color:white;border:none;padding:14px;width:100%;font-size:16px;font-weight:700;border-radius:8px;cursor:pointer;margin-bottom:10px}
+button.b2{background:#58a6ff}
+textarea{width:100%;height:200px;background:#161b22;color:#e6edf3;border:1px solid #30363d;border-radius:8px;padding:10px;font-size:11px;margin-top:10px;box-sizing:border-box}
+.stat{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px;margin-bottom:8px}
+.num{font-size:2em;font-weight:700;color:#58a6ff}
+.lbl{color:#8b949e;font-size:12px}
+</style>
+</head>
+<body>
+<h2>🚨 KesselTraining Data Redden</h2>
+
+<div id="stats"></div>
+
+<button onclick="toonData()">📋 Toon data als tekst (kopieer daarna)</button>
+<button class="b2" onclick="download()">⬇️ Download als bestand</button>
+
+<div id="output"></div>
+
+<script>
+var keys = ['sessions','lichaam','bibliotheek','templates','doelGewicht'];
+var data = {};
+var stats = document.getElementById('stats');
+
+keys.forEach(function(k){
+  var raw = localStorage.getItem(k);
+  data[k] = raw;
+  try {
+    var parsed = JSON.parse(raw || 'null');
+    var count = Array.isArray(parsed) ? parsed.length : (parsed ? 1 : 0);
+    stats.innerHTML += '<div class="stat"><div class="num">'+count+'</div><div class="lbl">'+k+'</div></div>';
+  } catch(e) {}
+});
+
+function toonData(){
+  var out = JSON.stringify(data, null, 2);
+  var ta = document.createElement('textarea');
+  ta.value = out;
+  document.getElementById('output').innerHTML = '';
+  document.getElementById('output').appendChild(ta);
+  ta.select();
+  document.execCommand('copy');
+  alert('Data staat in het tekstvak hieronder EN is gekopieerd naar klembord! Mail het naar jezelf.');
+}
+
+function download(){
+  try {
+    var out = JSON.stringify(data, null, 2);
+    var blob = new Blob([out], {type:'application/json'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'kesseltraining-backup.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch(e) {
+    alert('Download mislukt: ' + e.message + '\n\nGebruik de kopieer knop!');
+  }
+}
+</script>
+</body>
+</html>
