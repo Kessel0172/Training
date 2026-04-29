@@ -224,7 +224,7 @@ input,textarea,select,button{font-family:'Barlow',sans-serif}
     <!-- PROGRESSIE -->
     <div class="page" id="page-progress">
       <div class="section-title">Spierverdeling</div>
-      <div class="radar-wrap"><div class="radar-box"><canvas id="radarChart" height="200"></canvas></div></div>
+      <div class="radar-wrap"><div class="radar-box"><canvas id="radarChart" height="240"></canvas></div></div>
       <div class="section-title">Overzicht</div>
       <div class="stat-grid" id="statGrid"></div>
       <div class="chart-wrap"><div class="chart-box"><div class="chart-title">Sessies — 8 weken</div><div id="barChartWrap"></div></div></div>
@@ -239,10 +239,17 @@ input,textarea,select,button{font-family:'Barlow',sans-serif}
       <div class="exercise-list" id="exerciseList"></div>
       <div class="section-title" style="padding-top:4px">Back-up &amp; herstel</div>
       <div class="backup-section">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Exporteer al je data als back-up bestand.</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Exporteer al je data als back-up.</div>
         <button onclick="exportData()" style="width:100%;padding:10px;background:var(--green-dim);border:1px solid var(--green);border-radius:var(--radius-sm);color:var(--green-text);font-size:13px;font-weight:700;cursor:pointer;margin-bottom:6px">⬇ Exporteer back-up</button>
-        <label style="display:block;width:100%;padding:10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;text-align:center">⬆ Importeer back-up<input type="file" accept=".json" onchange="importData(event)" style="display:none"></label>
+        <label style="display:block;width:100%;padding:10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;text-align:center;margin-bottom:6px">⬆ Importeer back-up<input type="file" accept=".json" onchange="importData(event)" style="display:none"></label>
         <div id="backupMsg" style="font-size:11px;color:var(--green-text);margin-top:6px;display:none"></div>
+        <!-- iOS backup textarea - verschijnt na export -->
+        <div id="iosBackupWrap" style="display:none;margin-top:10px">
+          <div style="font-size:11px;color:var(--amber-text);margin-bottom:6px;font-weight:600">📋 Selecteer alles → Kopieer → Plak in Notes app</div>
+          <textarea id="iosBackupData" style="width:100%;height:140px;background:var(--bg);border:1px solid var(--green);border-radius:6px;color:var(--text);font-size:9px;padding:8px;font-family:monospace" readonly></textarea>
+          <button onclick="selecteerBackup()" style="width:100%;padding:8px;background:var(--blue-dim);border:1px solid var(--blue);border-radius:6px;color:var(--blue-text);font-size:12px;font-weight:700;cursor:pointer;margin-top:6px">📋 Selecteer alles & Kopieer</button>
+          <div style="font-size:10px;color:var(--muted);margin-top:6px;text-align:center">Plak daarna in je Notes app of mail naar jezelf</div>
+        </div>
       </div>
     </div>
 
@@ -591,7 +598,7 @@ function renderLogFields(edit){
     </div>
     <input class="field-input" id="fActiviteit" placeholder="Of typ eigen activiteit..." value="${v(0,edit,'activiteit')}" style="margin-bottom:4px">
     <div id="resActInfo" style="font-size:10px;color:var(--blue-text);background:var(--blue-dim);border-radius:6px;padding:5px 8px;margin-bottom:4px;display:none"></div>
-    <div class="cardio-fields">
+    <div id="resDuurLocVelden" class="cardio-fields">
       <div><div class="field-label">Duur (min)</div><input class="field-input" id="fDuur" type="number" placeholder="90" value="${v(0,edit,'duur')}"></div>
       <div><div class="field-label">Locatie</div><input class="field-input" id="fLoc" placeholder="Kazerne..." value="${v(0,edit,'locatie')}"></div>
     </div>
@@ -638,7 +645,7 @@ const RES_ACTEN={
   cooper:{label:'🏃 Cooper test',info:'Loop zo ver mogelijk in exact 12 minuten. Doel: ≥2200m.',velden:'cooper'},
   mars:{label:'🎒 Marstest',info:'2000m marcheren in ≤20 min met 25kg rugzak (tempo 6 km/u).',velden:'mars'},
   til:{label:'📦 Til & draagtest',info:'Munitiekist (20kg) 10× van borsthoogte, 25m dragen en terug.',velden:'overig'},
-  graaf:{label:'⛏️ Graaftest',info:'Medicine bal (5kg): graafbeweging grond → borsthoogte, 60 sec volhouden.',velden:'overig'},
+  graaf:{label:'⛏️ Graaftest',info:'Medicine bal (5kg): graafbeweging grond → borsthoogte, 60 sec volhouden. Noteer je score (aantal herhalingen) in notities.',velden:'overig'},
   parcours:{label:'🏟️ Vaardigheidsparcours',info:'Indoor: tijgeren, kruipen, hurken, schiethoudingen.',velden:'overig'},
   overig:{label:'📋 Overige training',info:'',velden:'overig'},
 };
@@ -659,6 +666,9 @@ function selResAct(type, el){
   document.getElementById('resCooperVelden').style.display=act.velden==='cooper'?'block':'none';
   document.getElementById('resMarsVelden').style.display=act.velden==='mars'?'block':'none';
   document.getElementById('resOverigVelden').style.display=act.velden==='overig'?'block':'none';
+  // Duur + locatie: toon alleen bij overig/til/graaf/parcours, niet bij cooper/mars (die hebben eigen velden)
+  const dlVelden=document.getElementById('resDuurLocVelden');
+  if(dlVelden) dlVelden.style.display=(act.velden==='cooper'||act.velden==='mars')?'none':'grid';
 }
 
 // OEF ROWS
@@ -927,14 +937,14 @@ function renderProgress(){
 function drawRadar(spierMap){
   const canvas=document.getElementById('radarChart');
   const ctx=canvas.getContext('2d');
-  const W=canvas.offsetWidth||300;canvas.width=W;canvas.height=200;
+  const W=canvas.offsetWidth||300;canvas.width=W;canvas.height=240;
   const spieren=Object.keys(spierMap);
   if(!spieren.length){
     ctx.fillStyle='#8b949e';ctx.font='11px Barlow,sans-serif';ctx.textAlign='center';
-    ctx.fillText('Koppel spiergroepen aan oefeningen in',W/2,90);
-    ctx.fillText('de Bibliotheek om dit diagram te zien.',W/2,108);return;
+    ctx.fillText('Koppel spiergroepen aan oefeningen in',W/2,110);
+    ctx.fillText('de Bibliotheek om dit diagram te zien.',W/2,128);return;
   }
-  const cx=W/2,cy=108,r=72,n=spieren.length;
+  const cx=W/2,cy=118,r=80,n=spieren.length;
   const maxV=Math.max(...Object.values(spierMap),1);
   for(let i=1;i<=4;i++){
     ctx.beginPath();ctx.strokeStyle='#30363d';ctx.lineWidth=0.5;
@@ -1495,8 +1505,58 @@ function useTemplate(id){
 
 // BACKUP
 function exportData(){
-  const blob=new Blob([JSON.stringify({versie:4,datum:new Date().toISOString(),sessions,lichaam:lichaamData,bibliotheek,templates,doelGewicht},null,2)],{type:'application/json'});
-  const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='kesseltraining-backup-'+todayStr()+'.json';a.click();URL.revokeObjectURL(url);
+  const data=JSON.stringify({versie:4,datum:new Date().toISOString(),sessions,lichaam:lichaamData,bibliotheek,templates,doelGewicht},null,2);
+  
+  // Probeer eerst normale download (werkt op Android/Desktop)
+  try{
+    const blob=new Blob([data],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download='kesseltraining-backup-'+todayStr()+'.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }catch(e){}
+  
+  // Altijd ook iOS textarea tonen (werkt altijd)
+  const wrap=document.getElementById('iosBackupWrap');
+  const ta=document.getElementById('iosBackupData');
+  if(wrap&&ta){
+    ta.value=data;
+    wrap.style.display='block';
+    // Scroll naar textarea
+    setTimeout(()=>wrap.scrollIntoView({behavior:'smooth'}),100);
+    // Probeer direct te selecteren
+    setTimeout(()=>{ta.focus();ta.select();},300);
+  }
+  
+  const msg=document.getElementById('backupMsg');
+  if(msg){msg.textContent='✓ Data klaar! Kopieer de tekst hieronder.';msg.style.display='block';}
+}
+
+function selecteerBackup(){
+  const ta=document.getElementById('iosBackupData');
+  if(!ta)return;
+  ta.focus();
+  ta.select();
+  // iOS specifiek
+  const range=document.createRange();
+  range.selectNodeContents(ta);
+  const sel=window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+  // Probeer kopiëren
+  try{
+    document.execCommand('copy');
+    const btn=event.target;
+    const orig=btn.textContent;
+    btn.textContent='✅ Gekopieerd!';
+    setTimeout(()=>btn.textContent=orig,2000);
+  }catch(e){
+    alert('Selecteer de tekst handmatig en kopieer met lang indrukken → Kopieer');
+  }
 }
 function importData(e){
   const file=e.target.files[0];if(!file)return;
