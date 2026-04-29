@@ -1,4 +1,4 @@
-const CACHE = 'mijntraining-v1';
+const CACHE = 'mijntraining-v2';
 const ASSETS = ['./index.html', './manifest.json'];
 
 self.addEventListener('install', e => {
