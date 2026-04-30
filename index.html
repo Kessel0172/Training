@@ -674,6 +674,25 @@ function renderLogFields(edit){
   if(currentType==='cardio-out'){
     ['fAfstand','fTijd'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',calcTempo);});
   }
+  // Auto-select reservist activiteit bij bewerken
+  if(currentType==='reservist'&&edit&&edit.activiteit){
+    // Zoek welke knop bij deze activiteit hoort
+    let actType=null;
+    for(const [k,v] of Object.entries(RES_ACTEN)){
+      if(v.label===edit.activiteit){actType=k;break;}
+    }
+    if(actType){
+      const btn=document.querySelector(`.res-act-btn[data-act="${actType}"]`);
+      if(btn) selResAct(actType,btn);
+    } else {
+      // Eigen activiteit getypt: toon overig velden als fallback
+      const btn=document.querySelector('.res-act-btn[data-act="overig"]');
+      if(btn) selResAct('overig',btn);
+      // Restore typed text
+      const ai=document.getElementById('fActiviteit');
+      if(ai) ai.value=edit.activiteit;
+    }
+  }
 }
 
 function calcTempo(){
@@ -1133,11 +1152,37 @@ function renderRes(){
     return Math.round(parseFloat(s.afstand||0)*1000);
   }));
 
-  // Mars: zoek reservist sessies met marsM ingevuld
-  const marsSessies=sessions.filter(s=>s.type==='reservist'&&s.marsM&&s.marsTijd);
+  // Mars: zoek reservist sessies met marsTijd ingevuld
+  const marsSessies=sessions.filter(s=>s.type==='reservist'&&s.marsTijd);
   const bestMars=marsSessies.length?marsSessies.reduce((best,s)=>{
-    const m=parseFloat(s.marsM),t=parseFloat(s.marsTijd);
-    if(!best||m>best.m||(m===best.m&&t<best.t)) return {m,t};
+    const t=parseFloat(s.marsTijd);
+    const w=parseFloat(s.marsGewicht||0);
+    // Beste = laagste tijd met minstens 25kg, of laagste tijd algemeen
+    if(!best||t<best.t) return {t,w,m:s.marsM};
+    return best;
+  },null):null;
+
+  // Til & draag: zoek beste aantal keer
+  const tilSessies=sessions.filter(s=>s.type==='reservist'&&s.tilAantal);
+  const bestTil=tilSessies.length?tilSessies.reduce((best,s)=>{
+    const a=parseFloat(s.tilAantal),g=parseFloat(s.tilGewicht||0);
+    if(!best||a>best.a) return {a,g};
+    return best;
+  },null):null;
+
+  // Graaftest: hoogste aantal herhalingen
+  const graafSessies=sessions.filter(s=>s.type==='reservist'&&s.graafScore);
+  const bestGraaf=graafSessies.length?Math.max(...graafSessies.map(s=>parseFloat(s.graafScore))):null;
+
+  // Schiethoudingen: laatste sessie met 'ja'
+  const parcoursSessies=sessions.filter(s=>s.type==='reservist'&&s.parcoursGehaald);
+  const bestParcours=parcoursSessies.find(s=>s.parcoursGehaald==='ja')?'gehaald':(parcoursSessies.length?'niet-gehaald':null);
+
+  // Werken boven hoogte: hoogste seconden
+  const werkenSessies=sessions.filter(s=>s.type==='reservist'&&(s.steekSec||s.vleugelSec));
+  const bestWerken=werkenSessies.length?werkenSessies.reduce((best,s)=>{
+    const ss=parseFloat(s.steekSec||0),vs=parseFloat(s.vleugelSec||0);
+    if(!best||(ss+vs)>(best.ss+best.vs)) return {ss,vs};
     return best;
   },null):null;
 
@@ -1145,19 +1190,40 @@ function renderRes(){
     {naam:'🏃 Cooper test',eis:'2200 m in 12 min',doel:2200,
      jv:bestCooperM>0?bestCooperM:null,
      jt:bestCooperM>0?bestCooperM+' m':null,
-     info:'Hardlopen zonder rugzak, exact 12 min. Alleen sessies met tijd ≤12 min tellen mee.'},
-    {naam:'🎒 Marstest',eis:'2000 m in 20 min — 25 kg',doel:2000,
-     jv:bestMars?bestMars.m:null,
-     jt:bestMars?bestMars.m+' m in '+bestMars.t+' min':null,
-     info:'Marcheren met 25kg rugzak, 6 km/u. Log via "Reservist sessie toevoegen".'},
-    {naam:'📦 Til & draagtest',eis:'Munitiekist 20 kg — 10×',doel:null,jv:null,jt:null,info:'Kist van borsthoogte, 25m dragen, 10 herhalingen.'},
-    {naam:'⛏️ Graaftest',eis:'60 sec — medicine bal 5 kg',doel:null,jv:null,jt:null,info:'Graafbeweging: grond → borsthoogte, 60 sec vol.'},
-    {naam:'🏟️ Vaardigheidsparcours',eis:'Indoor — schiethoudingen',doel:null,jv:null,jt:null,info:'Tijgeren, kruipen, hurken + schiethoudingen.'}
+     info:'Hardlopen zonder rugzak, exact 12 min.'},
+    {naam:'🎒 Marstest',eis:'24 min — 25 kg rugzak',doel:24,
+     jv:bestMars&&bestMars.t<=24&&bestMars.w>=25?100:(bestMars?Math.round((24/bestMars.t)*100):null),
+     jt:bestMars?bestMars.t+' min · '+(bestMars.w||'?')+' kg':null,
+     gehaald:bestMars&&bestMars.t<=24&&bestMars.w>=25,
+     info:'24 min lopen met 25 kg rugzak.'},
+    {naam:'📦 Til & draagtest',eis:'10× — 20 kg munitiekist',doel:10,
+     jv:bestTil?bestTil.a:null,
+     jt:bestTil?bestTil.a+'× · '+(bestTil.g||'?')+' kg':null,
+     gehaald:bestTil&&bestTil.a>=10&&bestTil.g>=20,
+     info:'Munitiekist 20 kg, 25m dragen, 10×.'},
+    {naam:'⛏️ Graaftest',eis:'60 sec volhouden',doel:1,
+     jv:bestGraaf?bestGraaf:null,
+     jt:bestGraaf?bestGraaf+' herhalingen':null,
+     gehaald:bestGraaf>0,
+     info:'Bal (5 kg) 60 sec draaibeweging — score = aantal herhalingen.'},
+    {naam:'🎯 Schiethoudingen',eis:'5 houdingen aannemen',doel:1,
+     jv:bestParcours==='gehaald'?1:null,
+     jt:bestParcours==='gehaald'?'✅ Gehaald':(bestParcours==='niet-gehaald'?'❌ Niet gehaald':null),
+     gehaald:bestParcours==='gehaald',
+     info:'Hurkzit + staand, knielend L/R, liggend.'},
+    {naam:'🔧 Werken boven hoogte',eis:'2× 60 sec',doel:120,
+     jv:bestWerken?(bestWerken.ss+bestWerken.vs):null,
+     jt:bestWerken?bestWerken.ss+'s + '+bestWerken.vs+'s':null,
+     gehaald:bestWerken&&bestWerken.ss>=60&&bestWerken.vs>=60,
+     info:'60s steekgewicht + 60s vleugelmoeren.'}
   ];
 
   const eisenHtml=eisen.map(e=>{
     let prog='',badge='';
-    if(e.doel&&e.jv!==null){
+    if(e.gehaald){
+      badge=`<div style="font-size:10px;font-weight:700;color:var(--green);margin-top:2px">✓ Gehaald!</div>`;
+      prog=`<div style="padding:0 12px 8px"><div style="background:var(--surface3);border-radius:3px;height:5px;overflow:hidden"><div style="height:100%;width:100%;background:var(--green);border-radius:3px"></div></div></div>`;
+    } else if(e.doel&&e.jv!==null){
       const pct=Math.min(100,Math.round(e.jv/e.doel*100));
       const k=pct>=100?'var(--green)':pct>=75?'var(--amber)':'var(--red)';
       badge=`<div style="font-size:10px;font-weight:700;color:${k};margin-top:2px">${pct>=100?'✓ Gehaald!':pct+'% van doel'}</div>`;
